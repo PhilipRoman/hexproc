@@ -3,6 +3,8 @@
 Hexproc is a hexadecimal preprocessor for building hex and binary files.
 See the link:doc/hexproc.adoc[manual] for more information.
 
+Hexproc is written in Lua and has no other required runtime dependencies.
+
 == Build
 
 Runing `make` will produce a standalone Lua script `hexproc`. Copy it wherever
