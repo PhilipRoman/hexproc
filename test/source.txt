@@ -11,8 +11,9 @@ string:
 code:
  # length of string
  00 [4](4)
+ // address of string
  00 [4]string
- 00 [4]syscall_write
+ 00 [4]syscall_write ; syscall number
  f0
  00 00 00 00 00 
  00 [4]syscall_exit

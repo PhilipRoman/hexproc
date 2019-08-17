@@ -33,10 +33,16 @@ local offset = 0
 
 -- first pass: label recording and string expansion
 for line in io.lines() do
-	line = line:gsub('^%s*', ''):gsub('%s*$', ''):gsub("^#.+", "")
+	-- remove leading and trailing whitespace
+	line = line:gsub('^%s*', ''):gsub('%s*$', '')
+	-- replace string literals with octets
 	line = line:gsub('"([^"]+)"', function(text)
 		return table.concat(string_to_octets(text), ' ')
 	end)
+	-- remove // ; and # comments
+	line = line:gsub('(#.+)$', '')
+	line = line:gsub('(//.+)$', '')
+	line = line:gsub('(;.+)$', '')
 	if is_label(line) then
 		local name, value = parse_label(line)
 		labels[name] = value or offset
