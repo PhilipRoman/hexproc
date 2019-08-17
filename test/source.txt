@@ -1,0 +1,19 @@
+syscall_write: 0x02
+syscall_exit: 0x01
+
+ 10 [ptr]code
+
+newline: 10
+
+string:
+ "abc" [1]newline
+
+code:
+ # length of string
+ 00 [4](4)
+ 00 [4]string
+ 00 [4]syscall_write
+ f0
+ 00 00 00 00 00 
+ 00 [4]syscall_exit
+ f0

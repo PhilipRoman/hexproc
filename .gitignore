@@ -1,0 +1,6 @@
+# generated documentation
+doc/man/
+doc/html/
+
+# generated executable
+hexproc

@@ -1,0 +1,85 @@
+= hexproc(1)
+Philip Roman
+include::../VERSION[]
+:doctype: manpage
+:revdate: 2019-08-17
+
+== Name
+
+hexproc - hexadecimal preprocessor for building hex files
+
+== Synopsis
+
+`*hexproc* [_OPTION_|_FILE_]`
+
+== Description
+
+Hexproc is a tool for building hex files. The input file
+(or `stdin`, if no file given) is processed and then
+written to `stdout`.
+
+Hexproc is meant to be used as part of a pipeline and
+therefore does not implement many features which are
+provided by other processing tools.
+
+It is recommended to use a text preprocessor (such as
+`cpp` or `m4`) before feeding the input to `hexproc` as
+`hexproc` does not provide macros or file inclusion.
+
+If you wish to build a binary file from the output of
+`hexproc`, use `xxd -p -r` (`-r` is for reverse hexdump
+and `-p` is for plain format).
+
+== Syntax
+
+Hexproc input consists of the following tokens:
+
+*strings*::
+	Quoted ASCII text is converted to bytes and replaced
+	with hexadecimal octets
+
+*octets*::
+	Two hexadecimal digits (seperated from other tokens by
+	whitespace) are outputted as-is
+
+*comments*::
+	Lines starting with '#' are replaced with a blank line
+
+*labels*::
+	A line in form of `KEY: VALUE` is called a _label_
+	(`VALUE` may be omitted). Labels act as global variables.
+	When encountering a label, `KEY` is mapped to the `VALUE`
+	or the current byte offset, if no value provided. `VALUE`
+	may be a decimal or, if prefixed with "0x", hexadecimal
+	integer expression. `KEY` may contain numbers, letters,
+	underscores and dots. Existing labels may not be redefined.
+
+*references*::
+	An expression in form of `[TYPE]NAME` is called a
+	_reference_. `TYPE` may be an integer denoting the number
+	of bytes to use or a _type name_, such as "int" or "ptr",
+	which is replaced with the size of that type (but may also
+	have influence on the representation of the value).
+
+*constants*::
+	A constant is an expression in form of `[TYPE](VALUE)`.
+	Constants work similarly to references, except instead of
+	using the value of a named label, they simply use whatever
+	value is given. `VALUE` has the same constraints as when
+	used in a *label*.
+
+Leading and trailing whitespace is ignored.
+
+Note that Hexproc maps lines one-to-one so that line numbers
+are preserved.
+
+== Options
+
+*-v, --version*::
+	Prints the program version and exits
+
+*-h, --help*::
+	Prints a brief help message and exits
+
+== See Also
+xxd(1)

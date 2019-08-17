@@ -1,0 +1,31 @@
+= Hexproc
+
+Hexproc is a hexadecimal preprocessor for building hex and binary files.
+See the link:doc/hexproc.adoc[manual] for more information.
+
+== Build
+
+Runing `make` will produce a standalone Lua script `hexproc`. Copy it wherever
+you want.
+
+Dependencies:
+
+	* `make` (tested on GNU make)
+	* `cpp` (tested on GCC C preprocessor)
+	* `lua5.x` (tested on Lua5.3 but should be compatiable with others)
+
+Optional dependencies
+
+	* For building documentation: `asciidoctor`
+	* For checking Lua code: `luacheck`
+	* To enable internal type checking: `luarocks` with package `checks`
+
+== Documentation
+
+Running `make docs` will generate documentation. `asciidoctor` is required
+to build the documentation. Alternatively, just read the AsciiDoc source
+under `doc/`.
+
+== License
+
+link:LICENSE[MIT]
