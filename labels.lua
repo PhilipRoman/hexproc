@@ -15,6 +15,11 @@ end
 local function evaluate_label(text, labels)
 	checks('string', 'table')
 
+	if text:match '^%(.+%)$' then
+		-- remove outer parenthesis
+		text = text:match '^%((.+)%)$'
+	end
+
 	local yard = new_shunting_yard()
 	for token in text:gmatch '%S+' do
 		yard:accept(token)
@@ -51,10 +56,6 @@ local function substitute_labels(text, labels)
 	local function replace(type, expr)
 		checks('string|int', 'string')
 
-		if expr:match '^%(.+%)$' then
-			-- remove outer parenthesis
-			expr = expr:match '^%((.+)%)$'
-		end
 		local value = evaluate_label(expr, labels)
 		return int_to_octets(type, value)
 	end

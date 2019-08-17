@@ -43,32 +43,38 @@ Hexproc input consists of the following tokens:
 	whitespace) are outputted as-is
 
 *comments*::
-	Lines starting with '#' are replaced with a blank line
+	Everything after `#`, `;` or `//` is discarded
+
+*expressions*::
+	Expressions are not standalone constructs, they are used
+	in forming *labels*. Expressions can be described using
+	the following grammar (operator precedence is as expected,
+	but you will still need spaces around operators):
+
+	exp ::= labelname
+	exp ::= decimal
+	exp ::= hexadecimal
+	exp ::= exp + exp
+	exp ::= exp - exp
+	exp ::= exp * exp
+	exp ::= exp / exp
+	exp ::= exp ^ exp
 
 *labels*::
-	A line in form of `KEY: VALUE` is called a _label_
-	(`VALUE` may be omitted). Labels act as global variables.
-	When encountering a label, `KEY` is mapped to the `VALUE`
-	or the current byte offset, if no value provided. `VALUE`
-	may be a decimal or, if prefixed with "0x", hexadecimal
-	integer expression. `KEY` may contain numbers, letters,
-	underscores and dots. Existing labels may not be redefined.
+	A line in form of `KEY: EXPRESSION` is called a _label_
+	(`EXPRESSION` may be omitted). Labels act as global variables.
+	When encountering a label, `KEY` is mapped to the `EXPRESSION`
+	or the current byte offset, if no value provided. `KEY` may
+	contain numbers, letters, underscores and dots. Existing
+	labels may not be redefined. It is allowed to refer to a
+	label name before the corresponding label has been declared.
 
-*references*::
-	An expression in form of `[TYPE]NAME` is called a
-	_reference_. `TYPE` may be an integer denoting the number
-	of bytes to use or a _type name_, such as "int" or "ptr",
+*formatters*::
+	An expression in form of `[TYPE]LABELNAME` or `[TYPE](EXPRESSION)`
+	is called a _formatter_. `TYPE` may be an integer denoting the
+	number of bytes to use or a _type name_, such as "int" or "ptr",
 	which is replaced with the size of that type (but may also
 	have influence on the representation of the value).
-	It is allowed to refer to a name before the corresponding
-	label has been declared.
-
-*constants*::
-	A constant is an expression in form of `[TYPE](VALUE)`.
-	Constants work similarly to references, except instead of
-	using the value of a named label, they simply use whatever
-	value is given. `VALUE` has the same constraints as when
-	used in a *label*.
 
 Leading and trailing whitespace is ignored.
 
