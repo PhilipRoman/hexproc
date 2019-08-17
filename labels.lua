@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datatypes.lua"
+#include "shunting-yard.lua"
 #include "octets.lua"
 
 -- __FILE__
@@ -11,34 +12,53 @@ local function is_label(text)
 	return text:match '^[._%w]+:.*$'
 end
 
+local function evaluate_label(text, labels)
+	checks('string', 'table')
+
+	local yard = new_shunting_yard()
+	for token in text:gmatch '%S+' do
+		yard:accept(token)
+	end
+
+	-- the function which will be called to expand tokens
+	local function callback(expr)
+		if tonumber(expr) then
+			return tonumber(expr)
+		elseif labels[expr] then
+			return evaluate_label(tostring(labels[expr]), labels)
+		end
+		error("Bad expression: " .. tostring(expr))
+	end
+
+	local result = yard:compute(callback)
+	if DEBUG then
+		io.stderr:write("# ", text, " => ", tostring(result), " \n")
+	end
+	return assert(math.tointeger(result))
+end
+
 local function parse_label(text)
 	checks 'string'
 
 	local name = text:match '^([._%w]+):.*$'
-	local value = math.tointeger(text:match('^[._%w]+:(.+)$'))
+	local value = text:match('^[._%w]+:(.+)$')
 	return name, value
 end
 
 local function substitute_labels(text, labels)
 	checks('string', 'table')
 
-	return text:gsub('%[(%w+)%]([._%w]+)', function(size, name)
+	local function replace(type, expr)
 		checks('string|int', 'string')
 
-		-- references in form of "[fmt]name"
-		local value = labels[name]
-		if not value then
-			error("No such label: " .. tostring(name))
+		if expr:match '^%(.+%)$' then
+			-- remove outer parenthesis
+			expr = expr:match '^%((.+)%)$'
 		end
-		return int_to_octets(size, value)
-	end):gsub('%[(%w+)%]%(([^)]+)%)', function(size, constant)
-		checks('string|int', 'int')
-
-		-- references in form of "[fmt](constant)"
-		constant = math.tointeger(constant)
-		if not constant then
-			error("Expected integer constant: " .. tostring(constant))
-		end
-		return int_to_octets(size, constant)
-	end)
+		local value = evaluate_label(expr, labels)
+		return int_to_octets(type, value)
+	end
+	return text
+		:gsub('%[(%w+)%](%b())', replace)
+		:gsub('%[(%w+)%]([%w._]+)', replace)
 end
