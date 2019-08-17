@@ -5,6 +5,9 @@ See the link:doc/hexproc.adoc[manual] for more information.
 
 Hexproc is written in Lua and has no other required runtime dependencies.
 
+You can either build it yourself or grab the pre-built version from
+https://github.com/PhilipRoman/hexproc/releases[GitHub releases]
+
 == Build
 
 Runing `make` will produce a standalone Lua script `hexproc`. Copy it wherever
