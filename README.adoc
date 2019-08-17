@@ -12,7 +12,7 @@ Dependencies:
 
 	* `make` (tested on GNU make)
 	* `cpp` (tested on GCC C preprocessor)
-	* `lua5.x` (tested on Lua5.3 but should be compatiable with others)
+	* `lua5.x` (tested on Lua5.3 but should be compatible with others)
 
 Optional dependencies
 
