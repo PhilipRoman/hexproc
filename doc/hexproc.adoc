@@ -60,6 +60,8 @@ Hexproc input consists of the following tokens:
 	of bytes to use or a _type name_, such as "int" or "ptr",
 	which is replaced with the size of that type (but may also
 	have influence on the representation of the value).
+	It is allowed to refer to a name before the corresponding
+	label has been declared.
 
 *constants*::
 	A constant is an expression in form of `[TYPE](VALUE)`.
