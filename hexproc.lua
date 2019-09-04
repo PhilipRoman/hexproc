@@ -31,14 +31,14 @@ end
 local labels = {}
 local offset = 0
 
+local tmp = io.tmpfile()
+
 -- first pass: label recording and string expansion
 for line in io.lines() do
-	-- remove leading and trailing whitespace
-	line = line:gsub('^%s*', ''):gsub('%s*$', '')
 	-- replace string literals with octets
-	line = line:gsub('"([^"]+)"', function(text)
-		return table.concat(string_to_octets(text), ' ') .. ' '
-	end)
+	line = line:gsub('"([^"]+)"', string_to_octets)
+	-- remove leading and trailing whitespace
+	line = line:gsub('^%s+', ''):gsub('%s+$', '')
 	-- remove // ; and # comments
 	line = line:gsub('(#.+)$', '')
 	line = line:gsub('(//.+)$', '')
@@ -46,19 +46,25 @@ for line in io.lines() do
 	if is_label(line) then
 		local name, value = parse_label(line)
 		labels[name] = value or offset
-		echo '' -- to keep the original lines numbers
+		tmp:write('\n') -- to keep the original line numbers
 	else
 		offset = offset + count_octets(line)
-		echo(line)
+		tmp:write(line, '\n')
 	end
 end
 
--- second pass: label reference substitution
-for i = 1, #output do
-	output[i] = substitute_labels(output[i], labels)
+tmp:flush()
+tmp:seek('set', 0)
+
+-- second pass: label reference substitution and output
+for line in tmp:lines() do
+	line = substitute_labels(line, labels)
+	line = line:gsub('%s+', '')
+	io.write(line:sub(1, 2))
+	for i = 3, #line, 2 do
+		io.write(' ', line:sub(i, i+1));
+	end
+	io.write '\n'
 end
 
--- and finally, print all lines
-for i = 1, #output do
-	print(output[i])
-end
+tmp:close()

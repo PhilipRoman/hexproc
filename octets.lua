@@ -11,7 +11,7 @@ local function string_to_octets(text)
 	for i = 1, #t do
 		t[i] = string.format("%x", t[i])
 	end
-	return t
+	return table.concat(t)
 end
 
 local hexdigits = {
@@ -35,10 +35,8 @@ local function int_to_octets(size, value)
 	for i = size, 1, -1 do
 		local byte = nth_byte(value, i)
 		local hi, lo = byte & 0xf, (byte >> 4) & 0xf
-		local len = #result
-		result[len+1] = hexdigits[hi]
-		result[len+2] = hexdigits[lo]
-		result[len+3] = ' '
+		result[#result+1] = hexdigits[hi]
+		result[#result+1] = hexdigits[lo]
 	end
 
 	return table.concat(result)
