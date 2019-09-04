@@ -58,7 +58,7 @@ tmp:seek('set', 0)
 
 -- second pass: label reference substitution and output
 for line in tmp:lines() do
-	line = substitute_labels(line, labels)
+	line = substitute_formatters(line, labels)
 	line = line:gsub('%s+', '')
 	io.write(line:sub(1, 2))
 	for i = 3, #line, 2 do

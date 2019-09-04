@@ -12,7 +12,24 @@ local function is_label(text)
 	return text:match '^[._%w]+:.*$'
 end
 
-local function evaluate_label(text, labels)
+local function expr_tokens(text)
+	return coroutine.wrap(function()
+		text = text:gsub('^%s+', '')
+		while text ~= "" do
+			-- try match operator
+			local token, remaining = text:match '^([+%-*/%^]+)(.*)$'
+			-- try match number or identifier
+			if not token then
+				token, remaining = text:match '^([%w._]+)(.*)$'
+			end
+			text = remaining
+			coroutine.yield(token)
+			text = text:gsub('^%s+', '')
+		end
+	end)
+end
+
+local function evaluate_expr(text, labels)
 	checks('string', 'table')
 
 	if text:match '^%(.+%)$' then
@@ -21,7 +38,7 @@ local function evaluate_label(text, labels)
 	end
 
 	local yard = new_shunting_yard()
-	for token in text:gmatch '%S+' do
+	for token in expr_tokens(text) do
 		yard:accept(token)
 	end
 
@@ -30,7 +47,7 @@ local function evaluate_label(text, labels)
 		if tonumber(expr) then
 			return tonumber(expr)
 		elseif labels[expr] then
-			return evaluate_label(tostring(labels[expr]), labels)
+			return evaluate_expr(tostring(labels[expr]), labels)
 		end
 		error("Bad expression: " .. tostring(expr))
 	end
@@ -50,13 +67,13 @@ local function parse_label(text)
 	return name, value
 end
 
-local function substitute_labels(text, labels)
+local function substitute_formatters(text, labels)
 	checks('string', 'table')
 
 	local function replace(type, expr)
 		checks('string|int', 'string')
 
-		local value = evaluate_label(expr, labels)
+		local value = evaluate_expr(expr, labels)
 		return int_to_octets(type, value)
 	end
 	return text
