@@ -23,11 +23,6 @@ end
 
 -- __FILE__
 
-local output = {}
-local echo = function(x)
-	output[#output+1] = x
-end
-
 local labels = {}
 local offset = 0
 
