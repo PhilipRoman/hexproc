@@ -42,14 +42,6 @@ local function int_to_octets(size, value)
 	end
 
 	return table.concat(result)
-
-	--[[
-	-- format("%0Nx", n) returns 'n' as a N-digit hex string
-	return string.format('%0'..(size * 2)..'x', value):gsub('%x%x', function(octet)
-		-- add padding between octets
-		return octet .. ' '
-	end)
-	]]
 end
 
 local function count_octets(line)
