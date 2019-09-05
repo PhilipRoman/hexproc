@@ -34,7 +34,7 @@ local function int_to_octets(size, value)
 	local result = {}
 	for i = size, 1, -1 do
 		local byte = nth_byte(value, i)
-		local hi, lo = byte & 0xf, (byte >> 4) & 0xf
+		local hi, lo = (byte >> 4) & 0xf, byte & 0xf
 		result[#result+1] = hexdigits[hi]
 		result[#result+1] = hexdigits[lo]
 	end
