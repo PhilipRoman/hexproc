@@ -2,7 +2,5 @@
 man/*.html
 man/*.1
 
-# generated executable
-hexproc
-hexproc-sanitized
-hexproc-debug
+# generated executables
+build/

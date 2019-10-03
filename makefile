@@ -1,6 +1,7 @@
 HFILES := $(wildcard *.h)
 
 CC := clang
+WINDOWS_CC := x86_64-w64-mingw32-gcc
 
 CFLAGS := -std=c99 -pedantic -lm -pipe \
 	-DHEXPROC_DATE="\"$(shell date --universal)\"" \
@@ -18,26 +19,35 @@ RELEASE_FLAGS := -Os -O3 -march=native -funroll-loops
 
 CHECK_FLAGS := --std=c99 --std=c99 --enable=all -j6 --quiet -I/usr/include/
 
-.PHONY: all test check valgrind sanitize analyze doc clean
-.DEFAULT_GOAL := hexproc
+.PHONY: windows test check valgrind sanitize analyze doc clean
+.DEFAULT_GOAL := build/hexproc
 
-hexproc: hexproc.c $(HFILES)
+build/hexproc: hexproc.c $(HFILES)
+	@mkdir -p build
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $<
 	strip $@
 
-hexproc-sanitized: hexproc.c $(HFILES)
+windows: build/hexproc-win64.exe
+
+build/hexproc-win64.exe: hexproc.c $(HFILES)
+	@mkdir -p build
+	$(WINDOWS_CC) $(CFLAGS) $(WINDOWS_FLAGS) -o $@ $<
+
+build/hexproc-sanitized: hexproc.c $(HFILES)
+	@mkdir -p build
 	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $<
 
-hexproc-debug: hexproc.c $(HFILES)
+build/hexproc-debug: hexproc.c $(HFILES)
+	@mkdir -p build
 	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $<
 
-test: hexproc
+test: build/hexproc
 	./$< example/showcase.hxp
 
-valgrind: hexproc-debug
+valgrind: build/hexproc-debug
 	valgrind --leak-check=full ./$< example/showcase.hxp > /dev/null
 
-sanitize: hexproc-sanitized
+sanitize: build/hexproc-sanitized
 	./$< example/showcase.hxp > /dev/null
 
 analyze: hexproc.c $(HFILES)
@@ -55,6 +65,4 @@ man/%.html: man/%.adoc
 	asciidoctor -b html5 $<
 
 clean:
-	rm -v hexproc || true
-	rm -v hexproc-debug || true
-	rm -v hexproc-sanitized || true
+	rm -r -v build || true
