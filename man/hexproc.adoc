@@ -52,8 +52,6 @@ Hexproc input consists of the following tokens:
 
 *comments*::
 	End-of-line comments are created using `#`, `;` or `//`.
-	You can also add block comments starting with `/*` and
-	ending with `*/`.
 
 *expressions*::
 	Expressions are not standalone constructs, they are used
