@@ -1,0 +1,37 @@
+syntax "Hexproc" ".*\.hxp$" ".*\.hexproc$"
+
+# General
+color brightwhite ".+"
+
+# Labels
+color brightyellow ":.*"
+color green "[a-zA-Z0-9._]+:"
+
+# Formatters
+color brightyellow "\([^)]*?\)"
+color brightyellow "][a-zA-Z0-9._]+"
+color brightcyan "\[[a-zA-Z0-9, ]*]"
+
+# Keywords
+color brightcyan "\<(_Pad|_Align)\>"
+
+# Symbols
+color brightwhite ","
+color red "\+|\-|\*|\/|\^|"
+color brightblack "0x"
+
+# Strings
+color yellow "\"(\\.|[^\\\"])*\"|'(\\.|[^\\'])*'"
+
+# End-of-line comments
+color brightblack "(# |//).*$"
+color brightblack start="/\*" end="\*/"
+
+# C preprocessor
+color brightred "^#[a-z]+"
+
+# Shebang line
+color blue "^#!.*"
+
+# Trailing whitespaces
+color ,red "[[:space:]]+$"

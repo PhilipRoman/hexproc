@@ -1,0 +1,87 @@
+#include "classfile.hxp"
+
+CLASSFILE_MAGIC
+
+MINOR(0) // minor version
+MAJOR(8)
+
+TABLE_LENGTH(22) // constant pool
+
+	// pool entry 1
+	[1]pool_class [2](2)
+	// pool entry 2
+	UTF8_ENTRY(my_class_name, "JvmHello")
+
+	// pool entry 3
+	[1]pool_class [2](4)
+	// pool entry 4
+	UTF8_ENTRY(object_class_name, "java/lang/Object")
+
+	// pool entry 5
+	[1]pool_class [2](6)
+	// pool entry 6
+	UTF8_ENTRY(printstream_class_name, "java/io/PrintStream")
+
+	// pool entry 7
+	[1]pool_class [2](8)
+	// pool entry 8
+	UTF8_ENTRY(system_class_name, "java/lang/System")
+
+	// pool entry 9
+	[1]pool_string [2](10)
+	// pool entry 10
+	UTF8_ENTRY(message_chars, "Hello, world!")
+
+	// pool entry 11 - field 'System.out'
+	[1]pool_field [2](7) [2](12)
+	// pool entry 12 - name 'out', type 'PrintStream'
+	[1]pool_nametype [2](13) [2](14)
+	// pool entry 13
+	UTF8_ENTRY(out_field_name, "out")
+	// pool entry 14
+	UTF8_ENTRY(out_field_type, "Ljava/io/PrintStream;")
+
+	// pool entry 15 - method 'PrintStream.println'
+	[1]pool_method [2](5) [2](16)
+	// pool entry 16 - name 'println', type 'String -> void'
+	[1]pool_nametype [2](17) [2](18)
+	// pool entry 17
+	UTF8_ENTRY(println_method_name, "println")
+	// pool entry 18
+	UTF8_ENTRY(println_method_type, "(Ljava/lang/String;)V")
+
+	// pool entry 19
+	UTF8_ENTRY(main_method_name, "main")
+	// pool entry 20
+	UTF8_ENTRY(main_method_type, "([Ljava/lang/String;)V")
+	// pool entry 21
+	UTF8_ENTRY(code_attribute, "Code")
+
+[2](acc_public + acc_final) // class access flags
+[2](1) [2](3) // this class, super class
+
+TABLE_LENGTH(0) // interfaces
+
+TABLE_LENGTH(0) // fields
+
+TABLE_LENGTH(1) // methods
+	// main method header
+	[2](acc_public + acc_static)
+	[2](19) [2](20) // name, type
+	[2](1) // number of attributes
+	[2](21) // 'Code' attribute
+		[4](main_code_attribute.end - main_code_attribute) // 'Code' attribute size
+		main_code_attribute:
+		[2](2) [2](1) // max stack size, max local size
+		[4](main_code.end - main_code) // code size
+		main_code:
+			getstatic(11)
+			ldc(9)
+			invokevirtual(15)
+			return_void
+		main_code.end:
+		[2](0) // exception table size
+		[2](0) // number of attributes for 'Code'
+		main_code_attribute.end:
+
+TABLE_LENGTH(0) // attributes

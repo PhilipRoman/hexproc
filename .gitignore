@@ -1,6 +1,8 @@
 # generated documentation
-doc/man/
-doc/html/
+man/*.html
+man/*.1
 
 # generated executable
 hexproc
+hexproc-sanitized
+hexproc-debug

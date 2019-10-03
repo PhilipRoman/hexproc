@@ -1,35 +1,60 @@
-.PHONY: test check clean docs
+HFILES := $(wildcard *.h)
+
+CC := clang
+
+CFLAGS := -std=c99 -pedantic -lm -pipe \
+	-DHEXPROC_DATE="\"$(shell date --universal)\"" \
+	-DHEXPROC_VERSION="\"$(shell cat VERSION)\""
+
+ANALYSIS_FLAGS := -Wfloat-equal -Wstrict-overflow=4 -Wwrite-strings \
+	-Wswitch-enum -Wconversion -DCLEANUP
+
+SANITIZE_FLAGS := -O0 -g -fsanitize=undefined -fsanitize=leak \
+	-fsanitize=address -DCLEANUP
+
+DEBUG_FLAGS := -O0 -g -DCLEANUP
+
+RELEASE_FLAGS := -Os -O3 -march=native -funroll-loops
+
+CHECK_FLAGS := --std=c99 --std=c99 --enable=all -j6 --quiet -I/usr/include/
+
+.PHONY: all test check valgrind sanitize analyze doc clean
 .DEFAULT_GOAL := hexproc
 
-LUA_FILES := $(wildcard *.lua)
-HEXPROC_VERSION := $(shell cat VERSION)
-CPP_FLAGS := -P -traditional-cpp
+hexproc: hexproc.c $(HFILES)
+	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $<
+	strip $@
 
-# use c preprocessor to combine the lua files
-hexproc: $(LUA_FILES) VERSION
-	# clear output file and add shebang on first line
-	echo '#!/usr/bin/env lua5.3' > $@
-	# append the resulting script to the output file
-	cpp $(CPP_FLAGS) -DHEXPROC_VERSION=\"$(HEXPROC_VERSION)\" hexproc.lua >> $@
-	chmod +x $@
+hexproc-sanitized: hexproc.c $(HFILES)
+	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $<
 
-check: hexproc test
-	type luacheck && luacheck $<
+hexproc-debug: hexproc.c $(HFILES)
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $<
 
-test: hexproc test/source.txt
-	./hexproc test/source.txt
+test: hexproc
+	./$< example/showcase.hxp
+
+valgrind: hexproc-debug
+	valgrind --leak-check=full ./$< example/showcase.hxp > /dev/null
+
+sanitize: hexproc-sanitized
+	./$< example/showcase.hxp > /dev/null
+
+analyze: hexproc.c $(HFILES)
+	cppcheck $(CHECK_FLAGS) $^
+	$(CC) $(CFLAGS) $(ANALYSIS_FLAGS) -fsyntax-only $<
+
+check: analyze valgrind sanitize
+
+doc: man/hexproc.1 man/hexproc.html
+
+man/%.1: man/%.adoc
+	asciidoctor -b manpage $<
+
+man/%.html: man/%.adoc
+	asciidoctor -b html5 $<
 
 clean:
 	rm -v hexproc || true
-	rm -v -r doc/man/ || true
-	rm -v -r doc/html/ || true
-
-doc/man/%.1: doc/%.adoc VERSION
-	mkdir -p doc/man/
-	asciidoctor -b manpage -D doc/man/ $<
-
-doc/html/%.html: doc/%.adoc VERSION
-	mkdir -p doc/html/
-	asciidoctor -b html5 -D doc/html/ $<
-
-docs: doc/html/hexproc.html doc/man/hexproc.1
+	rm -v hexproc-debug || true
+	rm -v hexproc-sanitized || true

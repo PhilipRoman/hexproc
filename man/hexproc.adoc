@@ -6,11 +6,19 @@ include::../VERSION[]
 
 == Name
 
-hexproc - hexadecimal preprocessor for building hex files
+hexproc - hexadecimal preprocessor for building binary files or hexdumps
 
 == Synopsis
 
 `*hexproc* [_OPTION_|_FILE_]`
+
+== Options
+
+*-v, --version*::
+	Prints the program version and exits
+
+*-h, --help*::
+	Prints a brief help message and exits
 
 == Description
 
@@ -43,7 +51,9 @@ Hexproc input consists of the following tokens:
 	whitespace) are outputted as-is
 
 *comments*::
-	Everything after `#`, `;` or `//` is discarded
+	End-of-line comments are created using `#`, `;` or `//`.
+	You can also add block comments starting with `/*` and
+	ending with `*/`.
 
 *expressions*::
 	Expressions are not standalone constructs, they are used
@@ -51,9 +61,9 @@ Hexproc input consists of the following tokens:
 	the following grammar (operator precedence is as expected,
 	but you will still need spaces around operators):
 
-	exp ::= labelname
-	exp ::= decimal
-	exp ::= hexadecimal
+	exp ::= LabelName
+	exp ::= Decimal
+	exp ::= Hexadecimal
 	exp ::= exp + exp
 	exp ::= exp - exp
 	exp ::= exp * exp
@@ -72,22 +82,22 @@ Hexproc input consists of the following tokens:
 *formatters*::
 	An expression in form of `[TYPE]LABELNAME` or `[TYPE](EXPRESSION)`
 	is called a _formatter_. `TYPE` may be an integer denoting the
-	number of bytes to use or a _type name_, such as "int" or "ptr",
+	number of bytes to use or a _type name_, such as "int64" or "float",
 	which is replaced with the size of that type (but may also
 	have influence on the representation of the value).
 
 Leading and trailing whitespace is ignored.
 
-Note that Hexproc maps lines one-to-one so that line numbers
+Hexproc maps lines one-to-one so that line numbers
 are preserved.
 
-== Options
+== Type Names
+The following identifiers may be used as type names:
 
-*-v, --version*::
-	Prints the program version and exits
-
-*-h, --help*::
-	Prints a brief help message and exits
+* int64, int32, int16, int8 - fixed size types
+* long, int, short, byte - synonymous with fixed size types
+* ieee754_single, ieee754_double - IEEE 754 single and double precision floating point types
+* float, double - synonymous with above floating point types
 
 == See Also
-xxd(1)
+xxd(1), cpp(1)
