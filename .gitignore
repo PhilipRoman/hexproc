@@ -2,5 +2,8 @@
 man/*.html
 man/*.1
 
+# generated example files
+example/*.class
+
 # generated executables
 build/
