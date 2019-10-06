@@ -14,40 +14,66 @@ SANITIZE_FLAGS := -O0 -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -O0 -g -DCLEANUP
-
 RELEASE_FLAGS := -Os -O3 -march=native -funroll-loops
-
 CHECK_FLAGS := --std=c99 --std=c99 --enable=all -j6 --quiet -I/usr/include/
 
-.PHONY: windows test check valgrind sanitize analyze doc clean
-.DEFAULT_GOAL := build/hexproc
+.PHONY: linux windows test check valgrind sanitize analyze doc clean
+.DEFAULT_GOAL := linux
 
-build/hexproc: hexproc.c $(HFILES)
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $<
+###############################################################
+########################   COMPILING   ########################
+###############################################################
+
+linux: build/linux/hexproc
+build/linux/hexproc: build/linux/hexproc.o
+	@mkdir -p build/linux
+	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^
 	strip $@
 
-windows: build/hexproc-win64.exe
+build/linux/%.o: %.c $(HFILES)
+	@mkdir -p build/linux
+	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
-build/hexproc-win64.exe: hexproc.c $(HFILES)
-	@mkdir -p build
-	$(WINDOWS_CC) $(CFLAGS) $(WINDOWS_FLAGS) -o $@ $<
 
-build/hexproc-sanitized: hexproc.c $(HFILES)
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $<
+windows: build/windows/hexproc.exe
+build/windows/hexproc.exe: build/windows/hexproc.o
+	@mkdir -p build/windows
+	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^
+	strip $@
 
-build/hexproc-debug: hexproc.c $(HFILES)
-	@mkdir -p build
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $<
+build/windows/%.o: %.c $(HFILES)
+	@mkdir -p build/windows
+	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
-test: build/hexproc
+
+build/sanitized/hexproc: build/sanitized/hexproc.o
+	@mkdir -p build/sanitized
+	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $^
+
+build/sanitized/%.o: %.c $(HFILES)
+	@mkdir -p build/sanitized
+	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -c -o $@ $<
+
+
+build/debug/hexproc: build/debug/hexproc.o
+	@mkdir -p build/debug
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $^
+
+build/debug/%.o: %.c $(HFILES)
+	@mkdir -p build/debug
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -c -o $@ $<
+
+###############################################################
+#########################   TESTING   #########################
+###############################################################
+
+test: build/linux/hexproc
 	./$< example/showcase.hxp
 
-valgrind: build/hexproc-debug
+valgrind: build/debug/hexproc
 	valgrind --leak-check=full ./$< example/showcase.hxp > /dev/null
 
-sanitize: build/hexproc-sanitized
+sanitize: build/sanitized/hexproc
 	./$< example/showcase.hxp > /dev/null
 
 analyze: hexproc.c $(HFILES)
@@ -56,6 +82,10 @@ analyze: hexproc.c $(HFILES)
 
 check: analyze valgrind sanitize
 
+###############################################################
+#####################   DOCUMENTATION   #######################
+###############################################################
+
 doc: man/hexproc.1 man/hexproc.html
 
 man/%.1: man/%.adoc
@@ -63,6 +93,10 @@ man/%.1: man/%.adoc
 
 man/%.html: man/%.adoc
 	asciidoctor -b html5 $<
+
+###############################################################
+#######################   CLEANUP   ###########################
+###############################################################
 
 clean:
 	rm -r -v build || true
