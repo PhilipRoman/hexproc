@@ -2,40 +2,40 @@
 
 // Utilities for generating Java class files with Hexproc
 
-acc_public:      0x0001
-acc_private:     0x0002
-acc_protected:   0x0004
-acc_static:      0x0008
-acc_final:       0x0010
-acc_super:       0x0020
-acc_synchronized:0x0020
-acc_bridge:      0x0040
-acc_varargs:     0x0080
-acc_native:      0x0100
-acc_interface:   0x0200
-acc_abstract:    0x0400
-acc_strict:      0x0800
-acc_synthetic:   0x1000
-acc_annotation:  0x2000
-acc_enum:        0x4000
+modifier.public:      0x0001
+modifier.private:     0x0002
+modifier.protected:   0x0004
+modifier.static:      0x0008
+modifier.final:       0x0010
+modifier.super:       0x0020
+modifier.synchronized:0x0020
+modifier.bridge:      0x0040
+modifier.varargs:     0x0080
+modifier.native:      0x0100
+modifier.interface:   0x0200
+modifier.abstract:    0x0400
+modifier.strict:      0x0800
+modifier.synthetic:   0x1000
+modifier.annotation:  0x2000
+modifier.enum:        0x4000
 
-pool_utf8:       1
-pool_int:        3
-pool_float:      4
-pool_long:       5
-pool_double:     6
-pool_class:      7
-pool_string:     8
-pool_field:      9
-pool_method:     10
-pool_interface:  11
-pool_nametype:   12
-pool_mhandle:    15
-pool_mtype:      16
-pool_dynamic:    17
-pool_invokedyn:  18
-pool_module:     19
-pool_package:    20
+entrytype.utf8:       1
+entrytype.int:        3
+entrytype.float:      4
+entrytype.long:       5
+entrytype.double:     6
+entrytype.class:      7
+entrytype.string:     8
+entrytype.field:      9
+entrytype.method:     10
+entrytype.interface:  11
+entrytype.nametype:   12
+entrytype.mhandle:    15
+entrytype.mtype:      16
+entrytype.dynamic:    17
+entrytype.invokedyn:  18
+entrytype.module:     19
+entrytype.package:    20
 
 #define CLASSFILE_MAGIC CafeBabe
 
@@ -45,7 +45,7 @@ pool_package:    20
 #define TABLE_LENGTH(N) [2](N)
 
 #define UTF8_ENTRY(name, bytes) \
-	[1]pool_utf8 [2](name.end - name); \
+	[1]entrytype.utf8 [2](name.end - name); \
 	name:; \
 	bytes; \
 	name.end:;
