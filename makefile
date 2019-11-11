@@ -10,10 +10,10 @@ CFLAGS := -std=c99 -pedantic -lm -pipe \
 ANALYSIS_FLAGS := -Wfloat-equal -Wstrict-overflow=4 -Wwrite-strings \
 	-Wswitch-enum -Wconversion -DCLEANUP
 
-SANITIZE_FLAGS := -O0 -g -fsanitize=undefined -fsanitize=leak \
+SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
-DEBUG_FLAGS := -O0 -g -DCLEANUP
+DEBUG_FLAGS := -Og -g -DCLEANUP
 RELEASE_FLAGS := -Os -O3 -march=native -funroll-loops
 CHECK_FLAGS := --std=c99 --std=c99 --enable=all -j6 --quiet -I/usr/include/
 
@@ -24,6 +24,7 @@ CHECK_FLAGS := --std=c99 --std=c99 --enable=all -j6 --quiet -I/usr/include/
 ########################   COMPILING   ########################
 ###############################################################
 
+# Release targets
 linux: build/linux/hexproc
 build/linux/hexproc: build/linux/hexproc.o
 	@mkdir -p build/linux
@@ -45,7 +46,7 @@ build/windows/%.o: %.c $(HFILES)
 	@mkdir -p build/windows
 	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
-
+# Sanitized executables for finding bugs
 build/sanitized/hexproc: build/sanitized/hexproc.o
 	@mkdir -p build/sanitized
 	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $^
@@ -54,7 +55,7 @@ build/sanitized/%.o: %.c $(HFILES)
 	@mkdir -p build/sanitized
 	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -c -o $@ $<
 
-
+# Debug targets for Valgrind, etc.
 build/debug/hexproc: build/debug/hexproc.o
 	@mkdir -p build/debug
 	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $^
@@ -73,6 +74,7 @@ test: build/linux/hexproc
 valgrind: build/debug/hexproc
 	valgrind --leak-check=full ./$< example/showcase.hxp > /dev/null
 
+# Runs the sanitized executable
 sanitize: build/sanitized/hexproc
 	./$< example/showcase.hxp > /dev/null
 
