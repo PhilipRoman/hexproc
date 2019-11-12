@@ -158,8 +158,10 @@ int main(int argc, char **argv) {
 
 	if(argc == 1) {
 		input = stdin;
+		current_file_name = "<stdin>";
 	} else {
 		input = fopen(argv[1], "r");
+		current_file_name = argv[1];
 		if(!input) {
 			fprintf(stderr, "Couldn't open file \"%s\" (error %d)\n", argv[1], (int) errno);
 			return errno;

@@ -5,12 +5,13 @@
 #include <stddef.h>
 
 int line_number = 1;
+const char *current_file_name = "<unknown>";
 
 void report_error(const char *fmt, ...) {
 	va_list v;
 	va_start(v, fmt);
 
-	fprintf(stderr, "line %d: ", line_number);
+	fprintf(stderr, "%s:%d - ", current_file_name, line_number);
 	vfprintf(stderr, fmt, v);
 	fputc('\n', stderr);
 
