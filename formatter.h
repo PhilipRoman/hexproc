@@ -10,41 +10,41 @@
 
 #include "error.h"
 
-enum hp_datatype {
+enum datatype {
 	HP_FLOAT, HP_DOUBLE, HP_LONG, HP_INT, HP_SHORT, HP_BYTE
 };
 
-struct hp_formatter {
+struct formatter {
 	const char *expr;
-	enum hp_datatype datatype;
+	enum datatype datatype;
 	bool big_endian;
 	size_t nbytes;
 };
 
-struct hp_formatter *formatqueue = NULL;
+struct formatter *formatqueue = NULL;
 size_t formatqueue_cap = 0;
 size_t formatqueue_len = 0;
 size_t formatqueue_pos = 0;
 
-void add_formatter(struct hp_formatter fmt) {
+void add_formatter(struct formatter fmt) {
 	if(formatqueue_len >= formatqueue_cap) {
 		if(formatqueue_cap)
 			formatqueue_cap *= 3;
 		else
 			formatqueue_cap = 16;
-		formatqueue = realloc(formatqueue, formatqueue_cap * sizeof(struct hp_formatter));
+		formatqueue = realloc(formatqueue, formatqueue_cap * sizeof(struct formatter));
 	}
 	formatqueue[formatqueue_len++] = fmt;
 }
 
-struct hp_formatter default_formatter = {
+struct formatter default_formatter = {
 	.expr = "NAN",
 	.datatype = HP_INT,
 	.big_endian = 1,
 	.nbytes = 0,
 };
 
-struct hp_formatter take_next_formatter(void) {
+struct formatter take_next_formatter(void) {
 	if(formatqueue_pos >= formatqueue_len) {
 		report_error("Formatter queue underflow");
 		return default_formatter;
@@ -59,7 +59,7 @@ void cleanup_formatters(void) {
 	OPTIONAL_FREE(formatqueue);
 }
 
-enum hp_datatype resolve_datatype(const char *name) {
+enum datatype resolve_datatype(const char *name) {
 #define STR_EQ(a, b) (strcmp((a), (b)) == 0)
 	if(STR_EQ(name, "long") || STR_EQ(name, "int64"))
 		return HP_LONG;
@@ -80,7 +80,7 @@ enum hp_datatype resolve_datatype(const char *name) {
 #undef STR_EQ
 }
 
-size_t datatype_default_size(enum hp_datatype t) {
+size_t datatype_default_size(enum datatype t) {
 	switch(t) {
 		case HP_FLOAT: return 4;
 		case HP_DOUBLE: return 8;
@@ -91,7 +91,7 @@ size_t datatype_default_size(enum hp_datatype t) {
 	}
 }
 
-void format_value(double value, struct hp_formatter fmt, uint8_t *out, size_t *nbytes) {
+void format_value(double value, struct formatter fmt, uint8_t *out, size_t *nbytes) {
 	assert(sizeof(float) == 4);
 	assert(sizeof(double) == 8);
 

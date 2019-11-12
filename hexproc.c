@@ -58,7 +58,7 @@ void process_line(char *line, FILE *buffer) {
 				goto start;
 			}
 			case '[': {
-				struct hp_formatter formatter;
+				struct formatter formatter;
 				line += scan_formatter(line, &formatter);
 				offset += formatter.nbytes;
 				add_formatter(formatter);
@@ -100,7 +100,7 @@ void output_line(const char *line, FILE *output) {
 	while(line[0]) {
 		if(line[0] == '?') {
 			line += 2;
-			struct hp_formatter formatter = take_next_formatter();
+			struct formatter formatter = take_next_formatter();
 			double result = calc(formatter.expr);
 			uint8_t buf[8];
 			size_t nbytes;

@@ -219,7 +219,7 @@ double calc(const char *expr) {
 		} else if(expr[0] == '.' || expr[0] == '_' || isalpha(expr[0])) {
 			const char *name;
 			expr += scan_name(expr, &name);
-			struct hp_label *label = lookup_label(name);
+			struct label *label = lookup_label(name);
 			double result;
 			if(!label) {
 				report_error("Unknown identifier: \"%s\"", name);

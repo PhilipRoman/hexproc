@@ -5,13 +5,13 @@
 
 #include "error.h"
 
-struct hp_label {
+struct label {
 	const char *name;
 	const char *expr; // can be NULL
 	unsigned constant;
 };
 
-struct hp_label *labellist = NULL;
+struct label *labellist = NULL;
 size_t labellist_len = 0;
 size_t labellist_cap = 0;
 
@@ -21,9 +21,9 @@ static void add_label(const char *name, unsigned constant, const char *expr) {
 			labellist_cap *= 3;
 		else
 			labellist_cap = 16;
-		labellist = realloc(labellist, labellist_cap * sizeof(struct hp_label));
+		labellist = realloc(labellist, labellist_cap * sizeof(struct label));
 	}
-	struct hp_label label = {
+	struct label label = {
 		.name = name,
 		.expr = expr,
 		.constant = constant,
@@ -47,7 +47,7 @@ void cleanup_labels(void) {
 	OPTIONAL_FREE(labellist);
 }
 
-struct hp_label *lookup_label(const char *name) {
+struct label *lookup_label(const char *name) {
 	for(int i = 0; i < labellist_len; i++) {
 		if(strcmp(labellist[i].name, name) == 0) {
 			return labellist + i;

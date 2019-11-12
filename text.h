@@ -129,8 +129,8 @@ bool scan_label_line(const char *line, const char **key, const char **value, siz
 	return true;
 }
 
-static struct hp_formatter create_formatter(const char *fmt, const char *expr) {
-	struct hp_formatter result = {
+static struct formatter create_formatter(const char *fmt, const char *expr) {
+	struct formatter result = {
 		.expr = expr,
 		.datatype = HP_INT,
 		.big_endian = true,
@@ -184,7 +184,7 @@ static struct hp_formatter create_formatter(const char *fmt, const char *expr) {
 	return result;
 }
 
-size_t scan_formatter(const char *string, struct hp_formatter *out) {
+size_t scan_formatter(const char *string, struct formatter *out) {
 	const char *initial_string = string;
 
 	const char *fmt;
