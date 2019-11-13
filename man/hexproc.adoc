@@ -67,6 +67,9 @@ Hexproc input consists of the following tokens:
 	exp ::= exp * exp
 	exp ::= exp / exp
 	exp ::= exp ^ exp
+	exp ::= exp & exp
+	exp ::= exp | exp
+	exp ::= exp ~ exp
 
 *labels*::
 	A line in form of `KEY: EXPRESSION` is called a _label_

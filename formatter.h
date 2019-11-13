@@ -101,6 +101,8 @@ void format_value(double value, struct formatter fmt, uint8_t *out, size_t *nbyt
 		case HP_INT:
 		case HP_SHORT:
 		case HP_BYTE: {
+			if(!isfinite(value))
+				report_error("%f cannot be converted to an integer", value);
 			if(value > INT64_MAX) {
 				// also includes positive infinity
 				v = UINT64_MAX;

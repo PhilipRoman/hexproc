@@ -40,6 +40,9 @@ double calc(const char *expr);
 
 int prec(char op) {
 	switch(op) {
+		case '&':
+		case '|':
+		case '~': return 50;
 		case '+':
 		case '-': return 100;
 		case '*':
@@ -60,6 +63,14 @@ int leftassoc(char op) {
 	}
 }
 
+long to_integer(double d) {
+	if(!isfinite(d)) {
+		report_error("%f cannot be converted to an integer", d);
+		return 0;
+	}
+	return (long)d;
+}
+
 double op_eval(char op, double a, double b) {
 	switch(op) {
 		case '+': return a + b;
@@ -68,6 +79,9 @@ double op_eval(char op, double a, double b) {
 		case '/': return a / b;
 		case '%': return fmod(a, b);
 		case '^': return pow(a, b);
+		case '&': return to_integer(a) & to_integer(b);
+		case '|': return to_integer(a) | to_integer(b);
+		case '~': return to_integer(a) ^ to_integer(b);
 		default: {
 			report_error("Bad operator (char %d)", (int) op);
 			return NAN;
