@@ -80,11 +80,10 @@ size_t scan_name(const char *string, const char **out) {
 		char c = string[i];
 		bool namechar = c == '.' || c == '_' || isalnum(c);
 		if(!namechar) {
-			*out = strndup(string, i);
+			*out = i ? strndup(string, i) : NULL;
 			return i;
 		}
 	}
-	*out = NULL;
 }
 
 static inline size_t line_len(const char *line) {
@@ -93,40 +92,56 @@ static inline size_t line_len(const char *line) {
 			return i;
 }
 
-bool scan_label_line(const char *line, const char **key, const char **value, size_t *len) {
-	*len = line_len(line);
+void trim_end(const char *line, size_t *length) {
+	size_t remaining = *length;
+	while(remaining && isspace(line[remaining - 1]))
+		remaining--;
+	*length = remaining;
+}
 
+enum assign_mode {ASSIGN_LABEL, ASSIGN_LAZY, ASSIGN_IMMEDIATE};
+
+size_t try_scan_assign(const char *line, const char **key, const char **value, enum assign_mode *mode) {
+	size_t total_length = line_len(line);
+	const char *line_start = line;
 	line += scan_whitespace(line);
 
 	const char *k;
 	size_t key_length = scan_name(line, &k);
 	if(!key_length) {
-		free((char*) k);
-		return false;
+		return 0;
 	}
 	line += key_length;
 
 	line += scan_whitespace(line);
-	if(line[0] != ':') {
+	if(line[0] == '=') {
+		line++;
+		line += scan_whitespace(line);
+		size_t remaining = line_len(line);
+		trim_end(line, &remaining);
+		*key = k;
+		*value = strndup(line, remaining);
+		*mode = ASSIGN_LAZY;
+		return total_length;
+	} else if(line[0] == ':' && line[1] == '=') {
+		line += 2;
+		line += scan_whitespace(line);
+		size_t remaining = line_len(line);
+		trim_end(line, &remaining);
+		*key = k;
+		*value = strndup(line, remaining);
+		*mode = ASSIGN_IMMEDIATE;
+		return total_length;
+	} else if(line[0] == ':') {
+		line++;
+		*key = k;
+		*value = NULL;
+		*mode = ASSIGN_LABEL;
+		return line - line_start;;
+	} else {
 		free((char*) k);
 		return false;
 	}
-	line++;
-	line += scan_whitespace(line);
-
-	size_t remaining = line_len(line);
-
-	// trim end of line
-	while(remaining > 0 && isspace(line[remaining - 1]))
-		remaining--;
-
-	if(remaining > 0) {
-		*value = strndup(line, remaining);
-	} else {
-		*value = NULL;
-	}
-	*key = k;
-	return true;
 }
 
 static struct formatter create_formatter(const char *fmt, const char *expr) {

@@ -31,17 +31,6 @@ static inline void buffer_append_newline(FILE *buffer) {
 void process_line(char *line, FILE *buffer) {
 	start:
 	line += scan_whitespace(line);
-	const char *label_key;
-	const char *label_value;
-	size_t label_length;
-	if(scan_label_line(line, &label_key, &label_value, &label_length)) {
-		if(label_value)
-			add_expr_label(label_key, label_value);
-		else
-			add_constant_label(label_key, offset);
-		line += label_length;
-		goto start;
-	}
 	while(line[0]) {
 		switch(line[0]) {
 			case '/': {
@@ -81,6 +70,26 @@ void process_line(char *line, FILE *buffer) {
 				break;
 			}
 			default: {
+				// first, try matching an assignment
+				const char *key, *value;
+				enum assign_mode mode;
+				size_t assignment_size = try_scan_assign(line, &key, &value, &mode);
+				if(assignment_size) {
+					switch(mode) {
+						case ASSIGN_LABEL:
+							add_constant_label(key, offset);
+							break;
+						case ASSIGN_LAZY:
+							add_expr_label(key, value);
+							break;
+						case ASSIGN_IMMEDIATE:
+							add_constant_label(key, calc(value));
+							break;
+					}
+					line += assignment_size;
+					break;
+				}
+				// then, fall back to matching hex values
 				char octet[] = {'\0', '\0', '\0'};
 				line += scan_octet(line, octet);
 				fprintf(buffer, "%s ", octet);

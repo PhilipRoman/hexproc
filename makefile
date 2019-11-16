@@ -101,4 +101,6 @@ man/%.html: man/%.adoc
 ###############################################################
 
 clean:
-	rm -r -v build || true
+	@rm -r -v build || true
+	@rm -v man/hexproc.1 || true
+	@rm -v man/hexproc.html || true

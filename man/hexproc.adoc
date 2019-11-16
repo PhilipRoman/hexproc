@@ -47,19 +47,17 @@ Hexproc input consists of the following tokens:
 	with hexadecimal octets
 
 *octets*::
-	Two hexadecimal digits (seperated from other tokens by
-	whitespace) are outputted as-is
+	Two hexadecimal digits will appear on the output as-is
 
 *comments*::
-	End-of-line comments are created using `#`, `;` or `//`.
+	End-of-line comments are created using `#` or `//`;
 
 *expressions*::
 	Expressions are not standalone constructs, they are used
-	in forming *labels*. Expressions can be described using
-	the following grammar (operator precedence is as expected,
-	but you will still need spaces around operators):
+	in forming *variables*. Expressions can be described using
+	the following grammar (operator precedence works just like in C):
 
-	exp ::= LabelName
+	exp ::= VariableName
 	exp ::= Decimal
 	exp ::= Hexadecimal
 	exp ::= exp + exp
@@ -72,20 +70,30 @@ Hexproc input consists of the following tokens:
 	exp ::= exp ~ exp
 
 *labels*::
-	A line in form of `KEY: EXPRESSION` is called a _label_
-	(`EXPRESSION` may be omitted). Labels act as global variables.
-	When encountering a label, `KEY` is mapped to the `EXPRESSION`
-	or the current byte offset, if no value provided. `KEY` may
-	contain numbers, letters, underscores and dots. Existing
-	labels may not be redefined. It is allowed to refer to a
-	label name before the corresponding label has been declared.
+	The syntax `LABEL_NAME:` will assign the current byte offset
+	to the specified name. Labels may freely appear between tokens.
+
+*lazy assignment*::
+	The syntax `VAR_NAME = EXPRESSION` will map the variable name to the
+	given expression without evaluating it. Whenever the name is
+	referenced, the expression will be evaluated. The expression must
+	not be recursive. If you want to add more tokens after an assignment,
+	terminate the expression with `;`.
+
+*immediate assignment*::
+	The syntax `VAR_NAME := EXPRESSION` will evaluate the expression and
+	assign the result to the variable. The expression may reference the
+	variable it's being assigned to. If you want to add more tokens after
+	an assignment, terminate the expression with `;`.
 
 *formatters*::
-	An expression in form of `[TYPE]LABELNAME` or `[TYPE](EXPRESSION)`
-	is called a _formatter_. `TYPE` may be an integer denoting the
-	number of bytes to use or a _type name_, such as "int64" or "float",
-	which is replaced with the size of that type (but may also
-	have influence on the representation of the value).
+	An expression in form of `[TYPE]EXPRESSION` or `[TYPE](EXPRESSION)`
+	is called a _formatter_ (the first form is a shorthand for when the
+	expression is a number or a variable name). `TYPE` may be an integer
+	denoting the number of bytes to use or a _type name_, such as "int64"
+	or "float", which is replaced with the size of that type (but may also
+	have influence on the representation of the value). See section
+	_Type Names_ for more information. The expression is evaluated lazily.
 
 Leading and trailing whitespace is ignored.
 

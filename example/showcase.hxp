@@ -1,16 +1,16 @@
 #!/usr/bin/env hexproc
 
-syscall_write: 0x02; syscall_exit: 0x01
+syscall_write  =  0x02; syscall_exit=0x01
 
 	10 [4]code
 
 newline: 10
 
-string:
+string: some_other_label:
 	"abc" [byte](newline)
 string.end:
 
-string.length: string.end - string
+string.length = string.end - string
 code:
 		# length of string
 	00 [4,int](string.length)
@@ -47,7 +47,7 @@ code:
 [int16, LE](0xABCD)
 [1, short, LE](0xABCD)
 
-recursive: recursive
+recursive = recursive
 [9]recursive
 end:
 

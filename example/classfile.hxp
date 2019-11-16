@@ -2,55 +2,104 @@
 
 // Utilities for generating Java class files with Hexproc
 
-modifier.public:      0x0001
-modifier.private:     0x0002
-modifier.protected:   0x0004
-modifier.static:      0x0008
-modifier.final:       0x0010
-modifier.super:       0x0020
-modifier.synchronized:0x0020
-modifier.bridge:      0x0040
-modifier.varargs:     0x0080
-modifier.native:      0x0100
-modifier.interface:   0x0200
-modifier.abstract:    0x0400
-modifier.strict:      0x0800
-modifier.synthetic:   0x1000
-modifier.annotation:  0x2000
-modifier.enum:        0x4000
-
-entrytype.utf8:       1
-entrytype.int:        3
-entrytype.float:      4
-entrytype.long:       5
-entrytype.double:     6
-entrytype.class:      7
-entrytype.string:     8
-entrytype.field:      9
-entrytype.method:     10
-entrytype.interface:  11
-entrytype.nametype:   12
-entrytype.mhandle:    15
-entrytype.mtype:      16
-entrytype.dynamic:    17
-entrytype.invokedyn:  18
-entrytype.module:     19
-entrytype.package:    20
-
 #define CLASSFILE_MAGIC CafeBabe
 
-#define MINOR(N) [2](N)
-#define MAJOR(N) [2](44 + N)
+#define VERSION(major, minor) [2](minor) [2](44 + major)
 
 #define TABLE_LENGTH(N) [2](N)
 
+#define INCREMENT(name) name := name + 1;
+_next_index := 1
+#define CONSTANT_POOL [2]_next_index
+
+#define ENTRY(type, name) \
+	[1]entrytype.type \
+	pool.name := _next_index; \
+	INCREMENT(_next_index)
+
 #define UTF8_ENTRY(name, bytes) \
-	[1]entrytype.utf8 [2](name.end - name); \
-	name:; \
-	bytes; \
-	name.end:;
+	ENTRY(utf8, name) \
+	[2](pool.name.end - pool.name.start) \
+	pool.name.start: bytes pool.name.end:
+
+#define INTEGER_ENTRY(name, value) ENTRY(int, name) [int]value
+#define FLOAT_ENTRY(name, value) ENTRY(int, name) [float]value
+// long and double entries take two slots
+#define LONG_ENTRY(name, value) ENTRY(int, name) INCREMENT(_next_index) [long]value
+#define DOUBLE_ENTRY(name, value) ENTRY(int, name) INCREMENT(_next_index) [double]value
+
+#define CLASS_ENTRY(name, identifier) \
+	ENTRY(class, name) \
+	[2](pool.name + 1) \
+	UTF8_ENTRY(utf8.classname.name, identifier)
+
+#define STRING_ENTRY(name, text) \
+	ENTRY(string, name) \
+	[2](pool.name + 1) \
+	UTF8_ENTRY(utf8.string.data, text)
+
+#define FIELD_ENTRY(name, class, ident, type) \
+	ENTRY(field, name) \
+	[2]class [2](pool.name + 1) \
+	NAME_AND_TYPE(nat.field.name, ident, type)
+
+#define METHOD_ENTRY(name, class, ident, type) \
+	ENTRY(method, name) \
+	[2]class [2](pool.name + 1) \
+	NAME_AND_TYPE(nat.method.name, ident, type)
+
+#define INTERFACE_METHOD_ENTRY(name, class, ident, type) \
+	ENTRY(interface, name) \
+	[2]class [2](pool.name + 1) \
+	NAME_AND_TYPE(nat.imethod.name, ident, type)
+
+#define PACKAGE_ENTRY(name, ident) \
+	ENTRY(package, name) \
+	[2]_next_index \
+	UTF8_ENTRY(utf8.package.name, ident) \
+
+#define NAME_AND_TYPE(name, ident, type) \
+	ENTRY(nametype, name) \
+	[2](pool.name + 1) [2](pool.name + 2) \
+	UTF8_ENTRY(utf8.nat._name.name, ident) \
+	UTF8_ENTRY(utf8.nat._type.name, type) \
 
 #define getstatic(field_index) b2 [2](field_index)
 #define ldc(pool_index) 12 [1](pool_index)
 #define invokevirtual(method_index) b6 [2](method_index)
 #define return_void b1
+
+modifier.public =     0x0001
+modifier.private =    0x0002
+modifier.protected =  0x0004
+modifier.static =     0x0008
+modifier.final =      0x0010
+modifier.super =      0x0020
+modifier.synchronized=0x0020
+modifier.bridge =     0x0040
+modifier.varargs =    0x0080
+modifier.native =     0x0100
+modifier.interface =  0x0200
+modifier.abstract =   0x0400
+modifier.strict =     0x0800
+modifier.synthetic =  0x1000
+modifier.annotation = 0x2000
+modifier.enum =       0x4000
+
+entrytype.utf8 =      1
+entrytype.int =       3
+entrytype.float =     4
+entrytype.long =      5
+entrytype.double =    6
+entrytype.class =     7
+entrytype.string =    8
+entrytype.field =     9
+entrytype.method =    10
+entrytype.interface = 11
+entrytype.nametype =  12
+entrytype.mhandle =   15
+entrytype.mtype =     16
+entrytype.dynamic =   17
+entrytype.invokedyn = 18
+entrytype.module =    19
+entrytype.package =   20

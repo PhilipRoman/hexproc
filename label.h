@@ -15,7 +15,23 @@ struct label *labellist = NULL;
 size_t labellist_len = 0;
 size_t labellist_cap = 0;
 
+struct label *lookup_label(const char *name) {
+	for(int i = 0; i < labellist_len; i++) {
+		if(strcmp(labellist[i].name, name) == 0) {
+			return labellist + i;
+		}
+	}
+	return NULL;
+}
+
 static void add_label(const char *name, unsigned constant, const char *expr) {
+	struct label *existing = lookup_label(name);
+	if(existing) {
+		existing->expr = expr;
+		existing->constant = constant;
+		return;
+	}
+
 	if(labellist_len >= labellist_cap) {
 		if(labellist_cap)
 			labellist_cap *= 3;
@@ -45,13 +61,4 @@ void cleanup_labels(void) {
 		OPTIONAL_FREE((char*) labellist[i].expr);
 	}
 	OPTIONAL_FREE(labellist);
-}
-
-struct label *lookup_label(const char *name) {
-	for(int i = 0; i < labellist_len; i++) {
-		if(strcmp(labellist[i].name, name) == 0) {
-			return labellist + i;
-		}
-	}
-	return NULL;
 }

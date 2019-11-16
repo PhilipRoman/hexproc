@@ -3,9 +3,9 @@ syntax "Hexproc" ".*\.hxp$" ".*\.hexproc$"
 # General
 color brightwhite ".+"
 
-# Labels
-color brightyellow ":.*"
-color green "[a-zA-Z0-9._]+:"
+# Assignments
+color brightyellow "(:|:=|=).*"
+color green "[a-zA-Z0-9._]+[[:space:]]*?(:|:=|=)"
 
 # Formatters
 color brightyellow "\([^)]*?\)"
