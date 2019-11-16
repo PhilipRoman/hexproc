@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -193,6 +194,9 @@ int main(int argc, char **argv) {
 		line_number++;
 	}
 
+	if(input != stdin)
+		fclose(input);
+
 	rewind(tmp);
 	line_number = 1;
 
@@ -204,7 +208,11 @@ int main(int argc, char **argv) {
 		line_number++;
 	}
 
+	fclose(tmp);
+
 	fflush(output);
+	if(output != stdout)
+		fclose(output);
 
 	cleanup_formatters();
 	cleanup_labels();
