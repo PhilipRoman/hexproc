@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "strdup.h"
@@ -84,6 +85,27 @@ size_t scan_name(const char *string, const char **out) {
 			return i;
 		}
 	}
+}
+
+bool scan_line_marker(const char *line, uint64_t *linenum, const char **filename) {
+	if(line[0] != '#')
+		return false;
+	line++;
+	const char *endptr;
+	long n = strtol(line, (char**)&endptr, 10);
+	if(n < 0)
+		return false;
+	if(line == endptr) // failed to parse
+		return false;
+	line = endptr;
+	line += scan_whitespace(line);
+	size_t quotedlength = scan_quoted_string(line);
+	if(!quotedlength)
+		return false;
+
+	*linenum = n;
+	*filename = strndup(line+1, quotedlength - 2);
+	return true;
 }
 
 static inline size_t line_len(const char *line) {

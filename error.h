@@ -2,16 +2,16 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-#include <stddef.h>
+#include <inttypes.h>
 
-int line_number = 1;
+uint64_t line_number = 1;
 const char *current_file_name = "<unknown>";
 
 void report_error(const char *fmt, ...) {
 	va_list v;
 	va_start(v, fmt);
 
-	fprintf(stderr, "%s:%d - ", current_file_name, line_number);
+	fprintf(stderr, "%s:%"PRIu64"  ", current_file_name, line_number);
 	vfprintf(stderr, fmt, v);
 	fputc('\n', stderr);
 

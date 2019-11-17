@@ -20,7 +20,7 @@
 #include "output.h"
 #include "debugger.h"
 
-unsigned offset = 0;
+uint64_t offset = 0;
 
 const char * const HEX_DIGITS = "0123456789abcdef";
 
@@ -49,6 +49,13 @@ void process_line(char *line, FILE *buffer) {
 				break;
 			}
 			case '#': {
+				uint64_t linenum;
+				const char *filename;
+				if(scan_line_marker(line, &linenum, &filename)) {
+					// free(current_file_name);
+					current_file_name = filename;
+					line_number = linenum - 1;
+				}
 				goto end_loop;
 			}
 			case ';': {

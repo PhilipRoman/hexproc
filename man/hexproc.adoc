@@ -59,7 +59,9 @@ Hexproc input consists of the following tokens:
 	Two hexadecimal digits will appear on the output as-is
 
 *comments*::
-	End-of-line comments are created using `#` or `//`;
+	End-of-line comments are created using `#` or `//`; Note that
+	comments created with `#` can be used as line markers, similar
+	to how the C preprocessor uses them.
 
 *expressions*::
 	Expressions are not standalone constructs, they are used
