@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "posix.h"
+#include "strdup.h"
 #include "error.h"
 #include "formatter.h"
 

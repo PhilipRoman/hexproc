@@ -1,7 +1,7 @@
 .PHONY: java clean
 
 JvmHello.class: jvm_hello.hxp classfile.hxp
-	cpp $< | hexproc | xxd -r -p > $@
+	cpp $< | hexproc -b > $@
 
 java: JvmHello.class
 	java -version

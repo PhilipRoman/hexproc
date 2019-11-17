@@ -1,16 +1,24 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
-#include "posix.h"
+#ifdef _POSIX_C_SOURCE
+#include <unistd.h>
+#elif defined(_WIN32)
+#include <io.h>
+#endif
+
+#include "getline.h"
+#include "getopt.h"
 #include "error.h"
 #include "label.h"
 #include "formatter.h"
 #include "text.h"
 #include "calc.h"
+#include "output.h"
+#include "debugger.h"
 
 unsigned offset = 0;
 
@@ -104,76 +112,65 @@ void process_line(char *line, FILE *buffer) {
 	buffer_append_newline(buffer);
 }
 
-void output_line(const char *line, FILE *output) {
-	line += scan_whitespace(line);
-	int first = 1;
-	while(line[0]) {
-		if(line[0] == '?') {
-			line += 2;
-			struct formatter formatter = take_next_formatter();
-			double result = calc(formatter.expr);
-			uint8_t buf[8];
-			size_t nbytes;
-			format_value(result, formatter, buf, &nbytes);
-			for(size_t i = 0; i < nbytes; i++) {
-				if(first)
-					first = 0;
-				else
-					fputc(' ', output);
-				fprintf(output, "%02x", (unsigned int) buf[i]);
-			}
-		} else {
-			char octet[3];
-			line += scan_octet(line, octet);
-			octet[2] = '\0';
-			if(!first)
-				fputc(' ', output);
-			fputs(octet, output);
-		}
-		first = 0;
-		line += scan_whitespace(line);
-	}
-	fprintf(output, "\n");
-}
-
 const size_t io_buffer_size = 32 * 1024;
 const size_t default_linebuffer_size = 256;
 
-void print_usage(void) {
-			fprintf(stderr,
-"Usage: hexproc [OPTION|FILE]\n"
-"    -v, --version             Print program version and exit\n"
-"    -h, --help                Print this help message and exit\n"
-			);
+static void print_usage(void) {
+	fprintf(stderr,
+"Usage: hexproc [OPTION...] [FILE]\n"
+"    -v          Print program version and exit\n"
+"    -h          Print this help message and exit\n"
+"    -b          Output binary data\n"
+"    -B          Force output binary data (even when stdout is a tty)\n"
+"    -d          Enable debugger\n"
+	);
+}
+
+static void print_version(void) {
+	printf("Hexproc %s [%s]\n", HEXPROC_VERSION, HEXPROC_DATE);
 }
 
 int main(int argc, char **argv) {
-	if(argc >= 3) {
-		fprintf(stderr, "Too many arguments\n");
-		print_usage();
-		return 0;
-	}
-	if(argc == 2) {
-		if(!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
-			printf("Hexproc %s [%s]\n", HEXPROC_VERSION, HEXPROC_DATE);
-			return 0;
-		}
-		if(!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
-			print_usage();
-			return 0;
+	opterr = 0; // disable 'getopt' error message
+	int opt;
+	while((opt = getopt(argc, argv, "vhbBd")) != -1) {
+		switch (opt) {
+			case 'h':
+				print_usage();
+				return 0;
+			case 'v':
+				print_version();
+				return 0;
+			case 'B':
+				output_mode = OUTPUT_BINARY;
+				break;
+			case 'b':
+				if(isatty(fileno(stdin)))
+					fprintf(stderr, "Refusing to write binary data to console, use '-B' to override\n");
+				else
+					output_mode = OUTPUT_BINARY;
+				break;
+			case 'd':
+				debug_mode = true;
+				break;
+			default:
+				fprintf(stderr, "Unknown option: %s\n", argv[optind]);
+				print_usage();
+				return EINVAL; // invalid argument
 		}
 	}
 
 	FILE *input;
 
-	if(argc == 1) {
+	if(optind >= argc) {
+		// no file argument given
 		input = stdin;
 		current_file_name = "<stdin>";
 	} else {
-		input = fopen(argv[1], "r");
-		current_file_name = argv[1];
+		input = fopen(argv[optind], "r");
+		current_file_name = argv[optind];
 		if(!input) {
-			fprintf(stderr, "Couldn't open file \"%s\" (error %d)\n", argv[1], (int) errno);
+			fprintf(stderr, "Couldn't open file \"%s\" (error %d)\n", argv[optind], (int) errno);
 			return errno;
 		}
 	}
