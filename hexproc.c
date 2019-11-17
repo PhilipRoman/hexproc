@@ -121,7 +121,7 @@ static void print_usage(void) {
 "    -v          Print program version and exit\n"
 "    -h          Print this help message and exit\n"
 "    -b          Output binary data\n"
-"    -B          Force output binary data (even when stdout is a tty)\n"
+"    -B          Force output binary data (even when output is a TTY)\n"
 "    -d          Enable debugger\n"
 	);
 }

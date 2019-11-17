@@ -10,15 +10,24 @@ hexproc - hexadecimal preprocessor for building binary files or hexdumps
 
 == Synopsis
 
-`*hexproc* [_OPTION_|_FILE_]`
+`*hexproc* [_OPTION..._] [_FILE_]`
 
 == Options
 
-*-v, --version*::
+*-v*::
 	Prints the program version and exits
 
-*-h, --help*::
+*-h*::
 	Prints a brief help message and exits
+
+*-b*::
+	Outputs binary data instead of hexadecimal
+
+*-B*::
+	Forces writing binary data even if output is a TTY
+
+*-d*::
+	Enter debug mode
 
 == Description
 
