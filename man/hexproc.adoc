@@ -2,7 +2,7 @@
 Philip Roman
 include::../VERSION[]
 :doctype: manpage
-:revdate: 2019-08-17
+:revdate: 2019-11-18
 
 == Name
 
@@ -42,10 +42,6 @@ provided by other processing tools.
 It is recommended to use a text preprocessor (such as
 `cpp` or `m4`) before feeding the input to `hexproc` as
 `hexproc` does not provide macros or file inclusion.
-
-If you wish to build a binary file from the output of
-`hexproc`, use `xxd -p -r` (`-r` is for reverse hexdump
-and `-p` is for plain format).
 
 == Syntax
 
