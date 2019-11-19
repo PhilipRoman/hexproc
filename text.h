@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "strdup.h"
-#include "error.h"
+#include "diagnostic.h"
 #include "formatter.h"
 
 bool scan_char(const char *string, char expected) {

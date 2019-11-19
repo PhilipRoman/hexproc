@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 #ifdef _POSIX_C_SOURCE
@@ -12,112 +11,12 @@
 
 #include "getline.h"
 #include "getopt.h"
-#include "error.h"
-#include "label.h"
-#include "formatter.h"
-#include "text.h"
-#include "calc.h"
+#include "diagnostic.h"
 #include "output.h"
+#include "formatter.h"
+#include "label.h"
 #include "debugger.h"
-
-uint64_t offset = 0;
-
-const char * const HEX_DIGITS = "0123456789abcdef";
-
-static inline void buffer_append_octet(FILE *buffer, char high, char low) {
-	char temp[3];
-	temp[0] = high;
-	temp[1] = low;
-	temp[2] = ' ';
-	fwrite(temp, sizeof(temp), 1, buffer);
-}
-
-static inline void buffer_append_newline(FILE *buffer) {
-	char newline  = '\n';
-	fwrite(&newline, 1, 1, buffer);
-}
-
-void process_line(char *line, FILE *buffer) {
-	start:
-	line += scan_whitespace(line);
-	while(line[0]) {
-		switch(line[0]) {
-			case '/': {
-				line++;
-				if(line[0] == '/')
-					goto end_loop;
-				break;
-			}
-			case '#': {
-				uint64_t linenum;
-				const char *filename;
-				if(scan_line_marker(line, &linenum, &filename)) {
-					// free(current_file_name);
-					current_file_name = filename;
-					line_number = linenum - 1;
-				}
-				goto end_loop;
-			}
-			case ';': {
-				line++;
-				goto start;
-			}
-			case '[': {
-				struct formatter formatter;
-				line += scan_formatter(line, &formatter);
-				offset += formatter.nbytes;
-				add_formatter(formatter);
-				buffer_append_octet(buffer, '?', HEX_DIGITS[formatter.nbytes]);
-				break;
-			}
-			case '"': {
-				// text doesn't include quotes
-				const char *literal = line + 1;
-				// size includes quotes
-				size_t literal_size = scan_quoted_string(line);
-				size_t nbytes = literal_size - 2; // don't count the quotes
-				offset += nbytes;
-				line += literal_size;
-				for(size_t i = 0; i < nbytes; i++)
-					buffer_append_octet(buffer,
-						HEX_DIGITS[(literal[i] >> 4) & 0xf],
-						HEX_DIGITS[literal[i] & 0xf]
-					);
-				break;
-			}
-			default: {
-				// first, try matching an assignment
-				const char *key, *value;
-				enum assign_mode mode;
-				size_t assignment_size = try_scan_assign(line, &key, &value, &mode);
-				if(assignment_size) {
-					switch(mode) {
-						case ASSIGN_LABEL:
-							add_constant_label(key, offset);
-							break;
-						case ASSIGN_LAZY:
-							add_expr_label(key, value);
-							break;
-						case ASSIGN_IMMEDIATE:
-							add_constant_label(key, calc(value));
-							break;
-					}
-					line += assignment_size;
-					break;
-				}
-				// then, fall back to matching hex values
-				char octet[] = {'\0', '\0', '\0'};
-				line += scan_octet(line, octet);
-				fprintf(buffer, "%s ", octet);
-				offset++;
-				break;
-			}
-		}
-		line += scan_whitespace(line);
-	}
-	end_loop:
-	buffer_append_newline(buffer);
-}
+#include "interpreter.h"
 
 const size_t io_buffer_size = 32 * 1024;
 const size_t default_linebuffer_size = 256;
@@ -188,24 +87,30 @@ int main(int argc, char **argv) {
 	/* buffers for streams, allocated with a single malloc call */
 	char *shared_buffer = malloc(io_buffer_size * 3);
 
-	setvbuf(input, shared_buffer, _IOFBF, io_buffer_size);
+	if(!debug_mode)
+		setvbuf(input, shared_buffer, _IOFBF, io_buffer_size);
 
 	FILE *tmp = tmpfile();
 	setvbuf(tmp, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
 
-	while((nread = getline(&line, &len, input)) != -1) {
-		process_line(line, tmp);
-		line_number++;
-	}
+	if(debug_mode)
+		enter_debugger();
 
-	if(input != stdin)
-		fclose(input);
+	while((nread = getline(&line, &len, input)) != -1) {
+		line_number++;
+		if(debug_mode && (exists_breakpoint(line_number) || break_on_next)) {
+			break_on_next = false;
+			enter_debugger();
+		}
+		process_line(line, tmp);
+	}
 
 	rewind(tmp);
 	line_number = 1;
 
 	FILE *output = stdout;
-	setvbuf(output, shared_buffer + 2 * io_buffer_size, _IOFBF, io_buffer_size);
+	if(!debug_mode)
+		setvbuf(output, shared_buffer + 2 * io_buffer_size, _IOFBF, io_buffer_size);
 
 	while((nread = getline(&line, &len, tmp)) != -1) {
 		output_line(line, output);

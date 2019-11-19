@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "error.h"
+#include "diagnostic.h"
 #include "text.h"
 #include "label.h"
 

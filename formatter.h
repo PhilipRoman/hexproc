@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "error.h"
+#include "diagnostic.h"
 
 enum datatype {
 	HP_FLOAT, HP_DOUBLE, HP_LONG, HP_INT, HP_SHORT, HP_BYTE
@@ -28,11 +28,8 @@ size_t formatqueue_pos = 0;
 
 void add_formatter(struct formatter fmt) {
 	if(formatqueue_len >= formatqueue_cap) {
-		if(formatqueue_cap)
-			formatqueue_cap *= 3;
-		else
-			formatqueue_cap = 16;
-		formatqueue = realloc(formatqueue, formatqueue_cap * sizeof(struct formatter));
+		formatqueue_cap = (formatqueue_cap == 0) ? 16 : formatqueue_cap * 3;
+		formatqueue = realloc(formatqueue, formatqueue_cap * sizeof(formatqueue[0]));
 	}
 	formatqueue[formatqueue_len++] = fmt;
 }

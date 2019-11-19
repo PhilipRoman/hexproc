@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "error.h"
+#include "diagnostic.h"
 
 struct label {
 	const char *name;
@@ -33,11 +33,8 @@ static void add_label(const char *name, unsigned constant, const char *expr) {
 	}
 
 	if(labellist_len >= labellist_cap) {
-		if(labellist_cap)
-			labellist_cap *= 3;
-		else
-			labellist_cap = 16;
-		labellist = realloc(labellist, labellist_cap * sizeof(struct label));
+		labellist_cap = (labellist_cap == 0) ? 16 : labellist_cap * 3;
+		labellist = realloc(labellist, labellist_cap * sizeof(labellist[0]));
 	}
 	struct label label = {
 		.name = name,

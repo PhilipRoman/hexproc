@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-uint64_t line_number = 1;
+uint64_t line_number = 0;
 const char *current_file_name = "<unknown>";
 
 void report_error(const char *fmt, ...) {

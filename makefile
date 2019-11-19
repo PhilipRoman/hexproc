@@ -1,6 +1,6 @@
 HFILES := $(wildcard *.h)
 
-CC := clang
+CC := gcc
 WINDOWS_CC := x86_64-w64-mingw32-gcc
 
 CFLAGS := -std=gnu99 -pedantic -pipe \
@@ -14,7 +14,7 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -Os -O3 -march=native -funroll-loops
+RELEASE_FLAGS := -Os -flto
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet -I/usr/include/
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
