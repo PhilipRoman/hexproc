@@ -122,9 +122,12 @@ int main(int argc, char **argv) {
 	fflush(output);
 	if(output != stdout)
 		fclose(output);
+	if(input != stdin)
+		fclose(input);
 
 	cleanup_formatters();
 	cleanup_labels();
+	cleanup_breakpoints();
 
 	OPTIONAL_FREE(line);
 	OPTIONAL_FREE(shared_buffer);

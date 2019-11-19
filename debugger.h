@@ -21,6 +21,10 @@ bool exists_breakpoint(uint64_t b) {
 	return false;
 }
 
+void cleanup_breakpoints(void) {
+	free(breaklist);
+}
+
 static void add_breakpoint(uint64_t linenum) {
 	if(exists_breakpoint(linenum))
 		return;
