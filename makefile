@@ -4,7 +4,7 @@ CC := gcc
 WINDOWS_CC := x86_64-w64-mingw32-gcc
 
 CFLAGS := -std=gnu99 -pedantic -pipe \
-	-DHEXPROC_DATE="\"$(shell date --universal)\"" \
+	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
 	-DHEXPROC_VERSION="\"$(shell cat VERSION)\""
 
 ANALYSIS_FLAGS := -Wfloat-equal -Wstrict-overflow=4 -Wwrite-strings \
