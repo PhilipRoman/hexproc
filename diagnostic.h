@@ -18,6 +18,8 @@ void report_error(const char *fmt, ...) {
 	va_end(v);
 }
 
+// Use OPTIONAL_FREE to free resources which wouldn't cause
+// memory leaks, but should be freed to satisfy tools like Valgrind
 #ifdef CLEANUP
 #define OPTIONAL_FREE(pointer) free(pointer)
 #else

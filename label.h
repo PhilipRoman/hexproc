@@ -5,6 +5,10 @@
 
 #include "diagnostic.h"
 
+/**
+ * This header implements a mapping from names to expressions
+ */
+
 struct label {
 	const char *name;
 	const char *expr; // can be NULL

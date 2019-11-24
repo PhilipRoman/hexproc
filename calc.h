@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "diagnostic.h"
 #include "text.h"
@@ -14,6 +15,7 @@
 #define OPERAND_STACK_SIZE 64
 #define NAME_STACK_SIZE 64
 
+/* Either an operator or a numeric value */
 struct yard_value {
 	union {
 		double num;
@@ -38,6 +40,7 @@ double calc(const char *expr);
 
 // IMPLEMENTATION STARTS HERE
 
+/* The precedence of given operator */
 int prec(char op) {
 	switch(op) {
 		case '&':
@@ -56,13 +59,16 @@ int prec(char op) {
 	}
 }
 
-int leftassoc(char op) {
+/* Returns true if the operator is left-associative */
+bool leftassoc(char op) {
 	switch(op) {
 		case '^': return 0;
 		default: return 1;
 	}
 }
 
+/* Attempts to convert the double to an integer,
+	handling the case when it has no such representation */
 long to_integer(double d) {
 	if(!isfinite(d)) {
 		report_error("%f cannot be converted to an integer", d);
@@ -71,6 +77,8 @@ long to_integer(double d) {
 	return (long)d;
 }
 
+/* evaluates the result of two arguments applied to
+	binary operator */
 double op_eval(char op, double a, double b) {
 	switch(op) {
 		case '+': return a + b;

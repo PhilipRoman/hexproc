@@ -7,6 +7,7 @@
 #include "text.h"
 #include "calc.h"
 
+/* The current byte offset */
 uint64_t offset = 0;
 const char * const HEX_DIGITS = "0123456789abcdef";
 
@@ -18,11 +19,8 @@ static inline void buffer_append_octet(FILE *buffer, char high, char low) {
 	fwrite(temp, sizeof(temp), 1, buffer);
 }
 
-static inline void buffer_append_newline(FILE *buffer) {
-	char newline  = '\n';
-	fwrite(&newline, 1, 1, buffer);
-}
-
+/* Runs first-pass processing on the given line and
+	writes intermediate results to the buffer file. */
 void process_line(char *line, FILE *buffer) {
 	start:
 	line += scan_whitespace(line);
@@ -102,5 +100,5 @@ void process_line(char *line, FILE *buffer) {
 		line += scan_whitespace(line);
 	}
 	end_loop:
-	buffer_append_newline(buffer);
+	fputc('\n', buffer);
 }

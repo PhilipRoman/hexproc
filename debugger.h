@@ -5,11 +5,13 @@
 #include <stdio.h>
 
 #include "label.h"
-
+/* True if debugger has been enabled */
 bool debug_mode = false;
+/* True if the debugger should be entered on next line */
 bool break_on_next = false;
 
 // in practice there are only a few breakpoints, so linear searching is okay
+/* Array of breakpoints */
 uint64_t *breaklist = NULL;
 unsigned breaklist_len = 0;
 unsigned breaklist_cap = 0;
