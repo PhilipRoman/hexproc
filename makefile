@@ -71,7 +71,8 @@ build/debug/%.o: %.c $(HFILES)
 ###############################################################
 
 test: build/linux/hexproc
-	./$< example/showcase.hxp
+#	./$< example/showcase.hxp
+	$(SHELL) test/test.sh
 
 valgrind: build/debug/hexproc
 	valgrind $(VALGRIND_FLAGS) ./$< example/showcase.hxp > /dev/null
