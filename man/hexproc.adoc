@@ -2,7 +2,6 @@
 Philip Roman
 include::../VERSION[]
 :doctype: manpage
-:revdate: 2019-11-18
 
 == Name
 
@@ -114,6 +113,20 @@ The following identifiers may be used as type names:
 * long, int, short, byte - synonymous with fixed size types
 * ieee754_single, ieee754_double - IEEE 754 single and double precision floating point types
 * float, double - synonymous with above floating point types
+
+== Debugger
+Hexproc comes with a built-in debugger, which you can activate using the `-d` option
+or writing `_Debug` in the source code. The debugger supports the following commands:
+
+*break* _NUMBER_, *brk* _NUMBER_::
+	Ccreates a breakpoint on given line number. When execution reaches a
+	line with a breakpoint, it will enter the debugger before evaluating the line
+
+*run*, *resume*:: Exits the debugger and resumes execution.
+
+*vars*:: Displays the current state of all variables
+
+*help*:: Shows help on how to use the debugger
 
 == See Also
 xxd(1), cpp(1)

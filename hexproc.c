@@ -24,11 +24,12 @@ const size_t default_linebuffer_size = 256;
 static void print_usage(void) {
 	fprintf(stderr,
 "Usage: hexproc [OPTION...] [FILE]\n"
-"    -v          Print program version and exit\n"
-"    -h          Print this help message and exit\n"
-"    -b          Output binary data\n"
-"    -B          Force output binary data (even when output is a TTY)\n"
-"    -d          Enable debugger\n"
+"  -v          Print program version and exit\n"
+"  -h          Print this help message and exit\n"
+"  -b          Output binary data\n"
+"  -B          Force output binary data (even when output is a TTY)\n"
+"  -d          Enable debugger\n"
+"See the manual page hexproc(1) for more information\n"
 	);
 }
 

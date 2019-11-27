@@ -39,38 +39,48 @@ static void add_breakpoint(uint64_t linenum) {
 }
 
 bool handle_debug_command(void) {
+	// return false if the debugger should exit here
+
 	// always scanf 1 less character than buffer size
 	char command[32];
-	scanf("%31s", command);
+	if(scanf("%31s", command) == EOF)
+		return false;
 	if(!strcmp("break", command) || !strcmp("brk", command)) {
 		uint64_t parameter;
-		scanf("%"SCNu64, &parameter);
+		if(scanf("%"SCNu64, &parameter) == EOF)
+			return false;
 		add_breakpoint(parameter);
+		printf("Added breakpoint before line %"PRIu64"\n", parameter);
 	} else if(!strcmp("resume", command) || !strcmp("run", command)) {
 		return false;
 	} else if(!strcmp("step", command) || !strcmp("s", command)) {
 		break_on_next = true;
 		return false;
 	} else if(!strcmp("vars", command)) {
+		printf("  List of variables:\n");
 		for(unsigned i = 0; i < labellist_len; i++) {
 			struct label label = labellist[i];
 			if(label.expr)
-				printf("\t%s -> \"%s\"\n", label.name, label.expr);
+				printf("    %s -> \"%s\"\n", label.name, label.expr);
 			else
-				printf("\t%s -> \"%d\"\n", label.name, label.constant);
+				printf("    %s -> \"%d\"\n", label.name, label.constant);
 		}
 	} else if(!strcmp("help", command)) {
-		printf("\tbreak NUMBER - set a breakpoint on a line\n");
-		printf("\trun - resume execution\n");
+		printf("  Available commands:\n");
+		printf("    break NUMBER - set a breakpoint before given line number\n");
+		printf("    run - resume execution\n");
+		printf("    vars - list current variables\n");
+		printf("    help - show debugger usage help\n");
+		printf("  See the manual page hexproc(1) for more info\n");
 	} else {
-		printf("Unknown command: \"%s\"\n", command);
+		printf("  Unknown command: \"%s\"\n", command);
 	}
 	return true;
 }
 
 void enter_debugger(void) {
-	printf("Entered debug mode before line %"PRIu64"\n", line_number);
+	printf("  Entered debug mode before line %"PRIu64"\n", line_number);
 	do {
-		printf("debug[%s:%"PRIu64"]> ", current_file_name, line_number);
+		printf("DEBUGGER (%s:%"PRIu64") ", current_file_name, line_number);
 	} while(handle_debug_command());
 }

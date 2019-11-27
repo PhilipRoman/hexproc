@@ -99,6 +99,8 @@ bool scan_line_marker(const char *line, uint64_t *linenum, const char **filename
 		return false;
 	line = endptr;
 	line += scan_whitespace(line);
+	if(line[0] != '"')
+		return false;
 	size_t quotedlength = scan_quoted_string(line);
 	if(!quotedlength)
 		return false;
