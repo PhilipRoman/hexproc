@@ -176,50 +176,34 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		.nbytes = 0,
 	};
 
-	fmt += scan_whitespace(fmt);
+	bool use_default_size = true;
 
-	bool use_default_size = false;
-
-	if(isdigit(fmt[0])) {
-		result.nbytes = fmt[0] - '0';
-		if(result.nbytes > 8) {
-			report_error("Number of bytes (%d) can't be more than 8", (int) result.nbytes);
-			result.nbytes = 8;
+	while(fmt[0]) {
+		fmt += scan_whitespace(fmt);
+		const char *attr;
+		fmt += scan_name(fmt, &attr);
+		if(isdigit(attr[0])) {
+			// we're parsing a numeric byte width
+			result.nbytes = attr[0] - '0';
+			if(result.nbytes > 8)
+				report_error("Number of bytes (%d) can't be more than 8", (int) result.nbytes);
+			else
+				use_default_size = false;
+		} else if(isalpha(attr[0])) {
+			if(strcmp("LE", attr)==0)
+				result.big_endian = false;
+			else if(strcmp("BE", attr)==0)
+				result.big_endian = true;
+			else
+				result.datatype = resolve_datatype(attr);
 		}
-		fmt++;
+		free((char*)attr);
 		fmt += scan_whitespace(fmt);
-
-		if(!strlen(fmt))
-			return result;
-
 		fmt += scan_char(fmt, ',');
-		fmt += scan_whitespace(fmt);
-	} else {
-		use_default_size = true;
 	}
-
-	const char *datatype;
-	fmt += scan_name(fmt, &datatype);
-	result.datatype = resolve_datatype(datatype);
-	free((char*) datatype);
 
 	if(use_default_size)
 		result.nbytes = datatype_default_size(result.datatype);
-
-	fmt += scan_whitespace(fmt);
-	if(!strlen(fmt))
-		return result;
-
-	fmt += scan_char(fmt, ',');
-	fmt += scan_whitespace(fmt);
-
-	const char *endian;
-	fmt += scan_name(fmt, &endian);
-	result.big_endian = strcmp(endian, "BE") == 0;
-	free((char*) endian);
-
-	fmt += scan_whitespace(fmt);
-
 	return result;
 }
 

@@ -48,32 +48,26 @@ Hexproc input consists of the following tokens:
 
 *strings*::
 	Quoted ASCII text is converted to bytes and replaced
-	with hexadecimal octets
+	with hexadecimal octets. For example, the result of `"Hello"`
+	is `48 65 6c 6c 6f`.
 
 *octets*::
-	Two hexadecimal digits will appear on the output as-is
+	Two hexadecimal digits will appear on the output as-is.
 
 *comments*::
-	End-of-line comments are created using `#` or `//`; Note that
-	comments created with `#` can be used as line markers, similar
-	to how the C preprocessor uses them.
+	End-of-line comments are created using `+#+` or `//`; Note that
+	comments in form of `+# NUMBER "filename"+` are recognized as
+	line markers, similar to how the C preprocessor uses them. This way,
+	you can get correct debug information after using `#include`.
 
 *expressions*::
 	Expressions are not standalone constructs, they are used
-	in forming *variables*. Expressions can be described using
-	the following grammar (operator precedence works just like in C):
-
-	exp ::= VariableName
-	exp ::= Decimal
-	exp ::= Hexadecimal
-	exp ::= exp + exp
-	exp ::= exp - exp
-	exp ::= exp * exp
-	exp ::= exp / exp
-	exp ::= exp ^ exp
-	exp ::= exp & exp
-	exp ::= exp | exp
-	exp ::= exp ~ exp
+	in forming *variables*. Expressions support the following binary
+	operators: `+`, `-`, `*`, `/`, `^` (power), `%` (remainder), `&`
+	(binary and), `|` (binary or) and `~` (binary xor). You can use decimal,
+	hexadecimal (prefix with 0x) or octal (prefix with 0) number literals.
+	You can also refer to variables by their names. Operator precedence
+	works just like in C.
 
 *labels*::
 	The syntax `LABEL_NAME:` will assign the current byte offset
@@ -93,13 +87,15 @@ Hexproc input consists of the following tokens:
 	an assignment, terminate the expression with `;`.
 
 *formatters*::
-	An expression in form of `[TYPE]EXPRESSION` or `[TYPE](EXPRESSION)`
+	An expression in form of `[attr1, attr2, ...]EXPRESSION` or `[attr1, attr2, ...](EXPRESSION)`
 	is called a _formatter_ (the first form is a shorthand for when the
-	expression is a number or a variable name). `TYPE` may be an integer
-	denoting the number of bytes to use or a _type name_, such as "int64"
-	or "float", which is replaced with the size of that type (but may also
-	have influence on the representation of the value). See section
-	_Type Names_ for more information. The expression is evaluated lazily.
+	expression is a number or a variable name). The expression is evaluated lazily,
+	after all processing has been done. `attr` may be one of the following:
+		* an integer between 0 and 8 inclusive, denoting the number of bytes to use
+		* the string `BE` or `LE`, which changes the representation of the value to
+			big or little endian, respectively
+		*  a _type name_, such as "int64" or "float", which controls the size and
+		representation of the value. (See section _Type Names_ for more information).
 
 Leading and trailing whitespace is ignored.
 
