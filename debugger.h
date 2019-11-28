@@ -63,7 +63,7 @@ bool handle_debug_command(void) {
 			if(label.expr)
 				printf("    %s -> \"%s\"\n", label.name, label.expr);
 			else
-				printf("    %s -> \"%d\"\n", label.name, label.constant);
+				printf("    %s -> \"%u\"\n", label.name, label.constant);
 		}
 	} else if(!strcmp("help", command)) {
 		printf("  Available commands:\n");

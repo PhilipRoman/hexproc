@@ -7,15 +7,15 @@ CFLAGS := -std=gnu99 -pedantic -pipe \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
 	-DHEXPROC_VERSION="\"$(shell cat VERSION)\""
 
-ANALYSIS_FLAGS := -Wfloat-equal -Wstrict-overflow=4 -Wwrite-strings \
-	-Wswitch-enum -Wconversion -DCLEANUP
+ANALYSIS_FLAGS := -Wfloat-equal -Wwrite-strings \
+	-Wswitch-enum -Wstrict-overflow=4 -DCLEANUP
 
 SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
 RELEASE_FLAGS := -Os -flto
-CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet -I/usr/include/
+CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
@@ -71,7 +71,6 @@ build/debug/%.o: %.c $(HFILES)
 ###############################################################
 
 test: build/linux/hexproc
-#	./$< example/showcase.hxp
 	$(SHELL) test/test.sh
 
 valgrind: build/debug/hexproc
@@ -85,7 +84,7 @@ analyze: hexproc.c $(HFILES)
 	cppcheck $(CHECK_FLAGS) $^
 	$(CC) $(CFLAGS) $(ANALYSIS_FLAGS) -fsyntax-only $<
 
-check: analyze valgrind sanitize
+check: analyze valgrind sanitize test
 
 ###############################################################
 #####################   DOCUMENTATION   #######################
