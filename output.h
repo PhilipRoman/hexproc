@@ -9,8 +9,8 @@
 #include "calc.h"
 
 enum {
-	OUTPUT_HEX, OUTPUT_BINARY
-} output_mode;
+	OUTPUT_BINARY, OUTPUT_HEX, OUTPUT_HEX_COLOR
+} output_mode = OUTPUT_HEX;
 
 static unsigned hex2int(uint8_t nibble) {
 	if('0' <= nibble && nibble <= '9')
@@ -20,6 +20,18 @@ static unsigned hex2int(uint8_t nibble) {
 	if('A' <= nibble && nibble <= 'Z')
 		return nibble - 'A' + 10;
 	return 0;
+}
+
+void begin_color(FILE *file) {
+	static const int colors[] = {100, 42, 44, 45, 46, 47};
+	static int color_index = 0;
+
+	fprintf(file, "\033[%dm", colors[color_index++]);
+	color_index %= (sizeof colors / sizeof colors[0]);
+}
+
+void end_color(FILE *file) {
+	fprintf(file, "\033[0m");
 }
 
 void output_line(const char *line, FILE *output) {
@@ -40,22 +52,32 @@ void output_line(const char *line, FILE *output) {
 				// print the separator ' ' unless this byte is the first on line
 				if(first_byte_on_line)
 					first_byte_on_line = false;
-				else if(output_mode == OUTPUT_HEX)
+				else if(output_mode >= OUTPUT_HEX)
 					fputc(' ', output);
 
-				if(output_mode == OUTPUT_HEX)
+				if(output_mode >= OUTPUT_HEX)
 					fprintf(output, "%02x", (unsigned int) buf[i]);
 				else
 					fputc(buf[i], output);
+			}
+		} else if(line[0]=='<') {
+			line++;
+			if(output_mode == OUTPUT_HEX_COLOR) {
+				begin_color(output);
+			}
+		} else if(line[0]=='>') {
+			line++;
+			if(output_mode == OUTPUT_HEX_COLOR) {
+				end_color(output);
 			}
 		} else {
 			char octet[3];
 			line += scan_octet(line, octet);
 			octet[2] = '\0';
-			if(!first_byte_on_line && output_mode == OUTPUT_HEX)
+			if(!first_byte_on_line && output_mode >= OUTPUT_HEX)
 				fputc(' ', output);
 			first_byte_on_line = false;
-			if(output_mode == OUTPUT_HEX)
+			if(output_mode >= OUTPUT_HEX)
 				fputs(octet, output);
 			else {
 				int hi = hex2int(octet[0]);
@@ -65,6 +87,6 @@ void output_line(const char *line, FILE *output) {
 		}
 		line += scan_whitespace(line);
 	}
-	if(output_mode == OUTPUT_HEX)
+	if(output_mode >= OUTPUT_HEX)
 		fprintf(output, "\n");
 }

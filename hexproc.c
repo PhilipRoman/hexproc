@@ -42,10 +42,11 @@ static void print_version(void) {
 
 int main(int argc, char **argv) {
 	bool force_binary = false;
+	bool force_color = false;
 
 	opterr = 0; // disable 'getopt' error message
 	int opt;
-	while((opt = getopt(argc, argv, "vhbBd")) != -1) {
+	while((opt = getopt(argc, argv, "vhbBdcC")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage();
@@ -63,6 +64,13 @@ int main(int argc, char **argv) {
 			case 'd':
 				debug_mode = true;
 				break;
+			case 'C':
+				force_color = true;
+				output_mode = OUTPUT_HEX_COLOR;
+				break;
+			case 'c':
+				output_mode = OUTPUT_HEX_COLOR;
+				break;
 			default:
 				fprintf(stderr, "Unknown option: %s\n", argv[optind]);
 				print_usage();
@@ -70,9 +78,14 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if(isatty(fileno(stdout)) && output_mode == OUTPUT_BINARY && !force_binary) {
+	if(isatty(fileno(stdout)) && (output_mode == OUTPUT_BINARY) && !force_binary) {
 		fprintf(stderr, "Refusing to write binary data to console, use '-B' to override\n");
 		return 1;
+	}
+	if(!isatty(fileno(stdout)) && (output_mode == OUTPUT_HEX_COLOR) && !force_color) {
+		fprintf(stderr, "Refusing to write colored output to a non-tty, use '-C' to override\n");
+		output_mode = OUTPUT_HEX;
+		// not a fatal error, no need to exit
 	}
 
 	FILE *input;

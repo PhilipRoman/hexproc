@@ -27,8 +27,7 @@ void process_line(char *line, FILE *buffer) {
 	while(line[0]) {
 		switch(line[0]) {
 			case '/': {
-				line++;
-				if(line[0] == '/')
+				if((++line)[0] == '/')
 					goto end_loop;
 				break;
 			}
@@ -51,7 +50,9 @@ void process_line(char *line, FILE *buffer) {
 				line += scan_formatter(line, &formatter);
 				offset += formatter.nbytes;
 				add_formatter(formatter);
+				fputc('<', buffer);
 				buffer_append_octet(buffer, '?', HEX_DIGITS[formatter.nbytes]);
+				fputc('>', buffer);
 				break;
 			}
 			case '"': {
@@ -62,11 +63,13 @@ void process_line(char *line, FILE *buffer) {
 				size_t nbytes = literal_size - 2; // don't count the quotes
 				offset += nbytes;
 				line += literal_size;
+				fputc('<', buffer);
 				for(size_t i = 0; i < nbytes; i++)
 					buffer_append_octet(buffer,
 						HEX_DIGITS[(literal[i] >> 4) & 0xf],
 						HEX_DIGITS[literal[i] & 0xf]
 					);
+				fputc('>', buffer);
 				break;
 			}
 			default: {
