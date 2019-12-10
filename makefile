@@ -1,9 +1,12 @@
+.POSIX:
+
 HFILES := $(wildcard *.h)
 
-CC := gcc
+CC ?= gcc
 WINDOWS_CC := x86_64-w64-mingw32-gcc
+MUSL_CC := musl-gcc
 
-CFLAGS := -std=gnu99 -pedantic -pipe \
+CFLAGS := -std=c99 -pedantic -pipe \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
 	-DHEXPROC_VERSION="\"$(shell cat VERSION)\""
 
@@ -14,18 +17,19 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -Os -flto
+RELEASE_FLAGS := -Os -fno-lto
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
-.PHONY: linux windows test check valgrind sanitize analyze doc clean
+.PHONY: linux windows musl test check valgrind sanitize analyze doc clean
 .DEFAULT_GOAL := linux
 
 ###############################################################
 ########################   COMPILING   ########################
 ###############################################################
 
+all: linux
 # Release targets
 linux: build/linux/hexproc
 build/linux/hexproc: build/linux/hexproc.o
@@ -36,6 +40,16 @@ build/linux/hexproc: build/linux/hexproc.o
 build/linux/%.o: %.c $(HFILES)
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
+
+musl: build/musl/hexproc
+build/musl/hexproc: build/musl/hexproc.o
+	@mkdir -p build/musl
+	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
+	strip $@
+
+build/musl/%.o: %.c $(HFILES)
+	@mkdir -p build/musl
+	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
 
 windows: build/windows/hexproc.exe

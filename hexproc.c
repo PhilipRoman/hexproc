@@ -7,6 +7,9 @@
 #include <unistd.h>
 #elif defined(_WIN32)
 #include <io.h>
+#else
+int isatty(int);
+int fileno(FILE*);
 #endif
 
 #include "getline.h"

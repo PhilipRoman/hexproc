@@ -12,11 +12,13 @@
 typedef ptrdiff_t ssize_t;
 
 /* a non-standard header, but usually available */
+#ifndef SSIZE_MAX
 #ifdef __PTRDIFF_MAX__
 #define SSIZE_MAX __PTRDIFF_MAX__
 #else
 /* not a good idea, but at this point I just don't care */
 #define SSIZE_MAX LONG_MAX
+#endif
 #endif
 
 /*
