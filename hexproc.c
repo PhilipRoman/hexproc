@@ -41,6 +41,8 @@ static void print_version(void) {
 }
 
 int main(int argc, char **argv) {
+	bool force_binary = false;
+
 	opterr = 0; // disable 'getopt' error message
 	int opt;
 	while((opt = getopt(argc, argv, "vhbBd")) != -1) {
@@ -52,13 +54,11 @@ int main(int argc, char **argv) {
 				print_version();
 				return 0;
 			case 'B':
+				force_binary = true;
 				output_mode = OUTPUT_BINARY;
 				break;
 			case 'b':
-				if(isatty(fileno(stdin)))
-					fprintf(stderr, "Refusing to write binary data to console, use '-B' to override\n");
-				else
-					output_mode = OUTPUT_BINARY;
+				output_mode = OUTPUT_BINARY;
 				break;
 			case 'd':
 				debug_mode = true;
@@ -68,6 +68,11 @@ int main(int argc, char **argv) {
 				print_usage();
 				return EINVAL; // invalid argument
 		}
+	}
+
+	if(isatty(fileno(stdout)) && output_mode == OUTPUT_BINARY && !force_binary) {
+		fprintf(stderr, "Refusing to write binary data to console, use '-B' to override\n");
+		return 1;
 	}
 
 	FILE *input;
