@@ -17,12 +17,12 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -Os -fno-lto
+RELEASE_FLAGS := -O2
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
-.PHONY: linux windows musl test check valgrind sanitize analyze doc clean
+.PHONY: linux windows musl test benchmark check valgrind sanitize analyze doc clean
 .DEFAULT_GOAL := linux
 
 ###############################################################
@@ -86,6 +86,9 @@ build/debug/%.o: %.c $(HFILES)
 
 test: build/linux/hexproc
 	$(SHELL) test/test.sh
+
+benchmark: build/linux/hexproc
+	$(SHELL) test/benchmark.sh
 
 valgrind: build/debug/hexproc
 	valgrind $(VALGRIND_FLAGS) ./$< example/showcase.hxp > /dev/null
