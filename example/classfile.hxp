@@ -56,13 +56,13 @@ _next_index := 1
 #define PACKAGE_ENTRY(name, ident) \
 	ENTRY(package, name) \
 	[2]_next_index \
-	UTF8_ENTRY(utf8.package.name, ident) \
+	UTF8_ENTRY(utf8.package.name, ident)
 
 #define NAME_AND_TYPE(name, ident, type) \
 	ENTRY(nametype, name) \
 	[2](pool.name + 1) [2](pool.name + 2) \
 	UTF8_ENTRY(utf8.nat._name.name, ident) \
-	UTF8_ENTRY(utf8.nat._type.name, type) \
+	UTF8_ENTRY(utf8.nat._type.name, type)
 
 #define getstatic(field_index) b2 [2](field_index)
 #define ldc(pool_index) 12 [1](pool_index)
