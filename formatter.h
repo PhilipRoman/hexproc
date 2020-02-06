@@ -34,25 +34,15 @@ void add_formatter(struct formatter fmt) {
 	formatqueue[formatqueue_len++] = fmt;
 }
 
-struct formatter default_formatter = {
-	.expr = "NAN",
-	.datatype = HP_INT,
-	.big_endian = 1,
-	.nbytes = 0,
-};
-
-struct formatter take_next_formatter(void) {
-	if(formatqueue_pos >= formatqueue_len) {
-		report_error("Formatter queue underflow");
-		return default_formatter;
-	} else {
-		return formatqueue[formatqueue_pos++];
-	}
+bool take_next_formatter(struct formatter *out) {
+	return (formatqueue_pos >= formatqueue_len)
+		? (report_error("Formatter queue underflow"), false)
+		: (*out = formatqueue[formatqueue_pos++], true);
 }
 
 void cleanup_formatters(void) {
 	for(int i = 0; i < formatqueue_len; i++)
-		OPTIONAL_FREE((char*) formatqueue[i].expr);
+		OPTIONAL_FREE(formatqueue[i].expr);
 	OPTIONAL_FREE(formatqueue);
 }
 

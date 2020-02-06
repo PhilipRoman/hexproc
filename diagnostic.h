@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
@@ -21,7 +22,7 @@ void report_error(const char *fmt, ...) {
 // Use OPTIONAL_FREE to free resources which wouldn't cause
 // memory leaks, but should be freed to satisfy tools like Valgrind
 #ifdef CLEANUP
-#define OPTIONAL_FREE(pointer) free(pointer)
+#define OPTIONAL_FREE(pointer) free((char*)pointer)
 #else
-#define OPTIONAL_FREE(pointer)
+#define OPTIONAL_FREE(pointer) do {} while(0)
 #endif
