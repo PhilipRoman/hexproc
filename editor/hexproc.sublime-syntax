@@ -1,0 +1,83 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+file_extensions:
+  - hxp
+  - hexproc
+scope: source.hexproc
+
+contexts:
+  # The prototype context is prepended to all contexts but those setting
+  # meta_include_prototype: false.
+  prototype:
+    - include: comments
+
+  main:
+    # The main context is the initial starting point of our syntax.
+    # Include other contexts from here (or specify them directly).
+    - include: octets
+    - include: names
+    - include: formatters
+    - include: assignments
+    - include: strings
+    - include: decimal
+    - include: hexadecimal
+    - include: binary
+
+  decimal:
+    - match: '\b(-)?[0-9.]+\b'
+      scope: constant.numeric.integer.decimal.hexproc
+
+  hexadecimal:
+    - match: '\b0x[0-9a-fA-F]+\b'
+      scope: constant.numeric.integer.hexadecimal.hexproc
+
+  binary:
+    - match: '\b0b[01]+\b'
+      scope: constant.numeric.integer.binary.hexadecimal.hexproc
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.hexproc
+      push:
+        - match: '"'
+          scope: punctuation.definition.string.end.hexproc
+          pop: true
+
+  assignments:
+    - match: '[a-zA-Z0-9.\-_]+\s*(:)?=\s*'
+      scope: punctuation.section.parens.begin.hexproc
+      push:
+        - match: '($\n?)|;'
+          scope: punctuation.section.parens.end.hexproc
+          pop: true
+
+  formatters:
+    - match: '\['
+      scope: punctuation.section.brackets.begin.hexproc
+      push:
+        - match: '\]'
+          scope: punctuation.section.brackets.end.hexproc
+          pop: true
+
+  names:
+    - match: '\b[a-zA-Z0-9\-_.]+\b'
+      scope: entity.name.hexproc
+
+  octets:
+    - match: '[a-fA-F0-9][a-fA-F0-9]'
+      scope: constant.numeric.integer.hexadecimal.hexproc
+
+  comments:
+    - match: '//'
+      scope: comment.line.double-slash.hexproc
+      push:
+        - meta_scope: comment.line.double-slash.hexproc
+        - match: '$\n?'
+          pop: true
+    - match: '\#'
+      scope: comment.line.number-sign.hexproc
+      push:
+        - meta_scope: comment.line.number-sign.hexproc
+        - match: '$\n?'
+          pop: true
