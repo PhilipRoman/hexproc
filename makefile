@@ -2,9 +2,16 @@
 
 HFILES := $(wildcard *.h)
 
-CC ?= gcc
-WINDOWS_CC := x86_64-w64-mingw32-gcc
 MUSL_CC := musl-gcc
+CC ?= gcc
+
+ifeq ($(OS),Windows_NT)
+WINDOWS_CC ?= gcc
+.DEFAULT_GOAL := windows
+else
+WINDOWS_CC ?= x86_64-w64-mingw32-gcc
+.DEFAULT_GOAL := linux
+endif
 
 CFLAGS := -std=c99 -pedantic -pipe \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
@@ -23,7 +30,6 @@ CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
 .PHONY: linux windows musl test benchmark check valgrind sanitize analyze doc clean
-.DEFAULT_GOAL := linux
 
 ###############################################################
 ########################   COMPILING   ########################
