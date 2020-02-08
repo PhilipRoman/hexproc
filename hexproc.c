@@ -31,6 +31,8 @@ static void print_usage(void) {
 "  -h          Print this help message and exit\n"
 "  -b          Output binary data\n"
 "  -B          Force output binary data (even when output is a TTY)\n"
+"  -c          Output colored text\n"
+"  -C          Force output colored text (even when output is not a TTY)\n"
 "  -d          Enable debugger\n"
 "See the manual page hexproc(1) for more information\n"
 	);
