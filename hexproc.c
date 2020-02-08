@@ -31,6 +31,8 @@ static void print_usage(void) {
 "  -h          Print this help message and exit\n"
 "  -b          Output binary data\n"
 "  -B          Force output binary data (even when output is a TTY)\n"
+"  -c          Output colored text\n"
+"  -C          Force output colored text (even when output is not a TTY)\n"
 "  -d          Enable debugger\n"
 "See the manual page hexproc(1) for more information\n"
 	);
@@ -42,10 +44,11 @@ static void print_version(void) {
 
 int main(int argc, char **argv) {
 	bool force_binary = false;
+	bool force_color = false;
 
 	opterr = 0; // disable 'getopt' error message
 	int opt;
-	while((opt = getopt(argc, argv, "vhbBd")) != -1) {
+	while((opt = getopt(argc, argv, "vhbBdcC")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage();
@@ -63,6 +66,13 @@ int main(int argc, char **argv) {
 			case 'd':
 				debug_mode = true;
 				break;
+			case 'C':
+				force_color = true;
+				output_mode = OUTPUT_HEX_COLOR;
+				break;
+			case 'c':
+				output_mode = OUTPUT_HEX_COLOR;
+				break;
 			default:
 				fprintf(stderr, "Unknown option: %s\n", argv[optind]);
 				print_usage();
@@ -70,9 +80,14 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	if(isatty(fileno(stdout)) && output_mode == OUTPUT_BINARY && !force_binary) {
+	if(isatty(fileno(stdout)) && (output_mode == OUTPUT_BINARY) && !force_binary) {
 		fprintf(stderr, "Refusing to write binary data to console, use '-B' to override\n");
 		return 1;
+	}
+	if(!isatty(fileno(stdout)) && (output_mode == OUTPUT_HEX_COLOR) && !force_color) {
+		fprintf(stderr, "Refusing to write colored output to a non-tty, use '-C' to override\n");
+		output_mode = OUTPUT_HEX;
+		// not a fatal error, no need to exit
 	}
 
 	FILE *input;
@@ -116,17 +131,18 @@ int main(int argc, char **argv) {
 
 	rewind(tmp);
 	line_number = 1;
+	offset = 0;
 
 	FILE *output = stdout;
 	if(!debug_mode)
 		setvbuf(output, shared_buffer + 2 * io_buffer_size, _IOFBF, io_buffer_size);
 
-	while((nread = getline(&line, &len, tmp)) != -1) {
-		output_line(line, output);
-		line_number++;
-	}
+	for(char byte; (byte = getc(tmp)) != EOF;)
+		output_byte(byte, output);
 
 	fclose(tmp);
+
+	finalize_output(output);
 
 	fflush(output);
 	if(output != stdout)
@@ -137,6 +153,7 @@ int main(int argc, char **argv) {
 	cleanup_formatters();
 	cleanup_labels();
 	cleanup_breakpoints();
+	cleanup_sourcemap();
 
 	OPTIONAL_FREE(line);
 	OPTIONAL_FREE(shared_buffer);
