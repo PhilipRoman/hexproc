@@ -21,7 +21,7 @@ int fileno(FILE*);
 #include "debugger.h"
 #include "interpreter.h"
 
-const size_t io_buffer_size = 32 * 1024;
+const size_t io_buffer_size = 8 * 1024;
 const size_t default_linebuffer_size = 256;
 
 static void print_usage(void) {
@@ -108,17 +108,21 @@ int main(int argc, char **argv) {
 	char *line = malloc(default_linebuffer_size);
 	size_t len = default_linebuffer_size;
 	ssize_t nread;
-	/* buffers for streams, allocated with a single malloc call */
-	char *shared_buffer = malloc(io_buffer_size * 3);
+	/* buffers for input/output streams, allocated with a single malloc call */
+	char *shared_buffer = malloc(io_buffer_size * 2);
+
 
 	if(!debug_mode)
 		setvbuf(input, shared_buffer, _IOFBF, io_buffer_size);
 
-	FILE *tmp = tmpfile();
-	setvbuf(tmp, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
+	FILE *output = stdout;
+	if(!debug_mode)
+		setvbuf(output, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
 
 	if(debug_mode)
 		enter_debugger();
+
+	struct bytequeue buffer = make_bytequeue();
 
 	while((nread = getline(&line, &len, input)) != -1) {
 		line_number++;
@@ -126,21 +130,16 @@ int main(int argc, char **argv) {
 			break_on_next = false;
 			enter_debugger();
 		}
-		process_line(line, tmp);
+		process_line(line, &buffer);
 	}
 
-	rewind(tmp);
+	bytequeue_rewind(&buffer);
+
 	line_number = 1;
 	offset = 0;
 
-	FILE *output = stdout;
-	if(!debug_mode)
-		setvbuf(output, shared_buffer + 2 * io_buffer_size, _IOFBF, io_buffer_size);
-
-	for(char byte; (byte = getc(tmp)) != EOF;)
+	for(char byte; (byte = bytequeue_get(&buffer)) != EOF;)
 		output_byte(byte, output);
-
-	fclose(tmp);
 
 	finalize_output(output);
 
@@ -154,6 +153,8 @@ int main(int argc, char **argv) {
 	cleanup_labels();
 	cleanup_breakpoints();
 	cleanup_sourcemap();
+
+	free_bytequeue(buffer);
 
 	OPTIONAL_FREE(line);
 	OPTIONAL_FREE(shared_buffer);

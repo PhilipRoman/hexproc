@@ -29,7 +29,7 @@ CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
-.PHONY: linux windows musl test benchmark check valgrind sanitize analyze doc clean
+.PHONY: linux windows musl test benchmark benchmark-linux benchmark-windows benchmark-musl check valgrind sanitize analyze doc clean
 
 ###############################################################
 ########################   COMPILING   ########################
@@ -92,9 +92,20 @@ build/debug/%.o: %.c $(HFILES)
 
 test: build/linux/hexproc
 	$(SHELL) test/test.sh
+ifeq ($(OS),Windows_NT)
+benchmark: benchmark-windows
+else
+benchmark: benchmark-linux
+endif
 
-benchmark: build/linux/hexproc
-	$(SHELL) test/benchmark.sh
+benchmark-linux: build/linux/hexproc
+	$(SHELL) test/benchmark.sh $<
+
+benchmark-musl: build/musl/hexproc
+	$(SHELL) test/benchmark.sh $<
+
+benchmark-windows: build/windows/hexproc.exe
+	$(SHELL) test/benchmark.sh $<
 
 valgrind: build/debug/hexproc
 	valgrind $(VALGRIND_FLAGS) ./$< example/showcase.hxp > /dev/null
