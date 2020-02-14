@@ -24,7 +24,7 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -O2
+RELEASE_FLAGS := -O2 -s
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
@@ -41,17 +41,16 @@ linux: build/linux/hexproc
 build/linux/hexproc: build/linux/hexproc.o
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/linux/%.o: %.c $(HFILES)
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
+
 musl: build/musl/hexproc
 build/musl/hexproc: build/musl/hexproc.o
 	@mkdir -p build/musl
 	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/musl/%.o: %.c $(HFILES)
 	@mkdir -p build/musl
@@ -62,7 +61,6 @@ windows: build/windows/hexproc.exe
 build/windows/hexproc.exe: build/windows/hexproc.o
 	@mkdir -p build/windows
 	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/windows/%.o: %.c $(HFILES)
 	@mkdir -p build/windows
