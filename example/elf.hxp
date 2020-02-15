@@ -1,0 +1,145 @@
+#pragma once
+
+// utilities for building ELF object files with Hexproc
+
+// fix ancient non-standard C preprocessor macros
+#ifdef linux
+#undef linux
+#endif
+
+#ifndef WORD_SIZE
+#define WORD_SIZE 8
+#endif
+
+endian.little = 1
+endian.big = 2
+
+endian := 2 // big endian
+elf_version := 1
+
+_word_size_indicator := WORD_SIZE / 4 // 1 means 32 bits, 2 means 64 bits
+_elf_header_size := 40 + 3 * WORD_SIZE
+
+ph_entry_count := 0
+sh_entry_count := 0
+
+ph_entry_size := 8 + WORD_SIZE * 6
+sh_entry_size := 16 + WORD_SIZE * 6
+
+abi = abi.linux
+abi.version = 0
+filetype = filetype.dyn
+machine = machine.amd64
+_start = 0
+
+_phmask := 0; _shmask := 0
+
+#define _INCREMENT(name) name := name + 1;
+
+#define ELF_HEADER 7F "ELF" \
+	[1]_word_size_indicator [1]endian [1]elf_version [1]abi [1]abi.version [7]0 \
+	[2,LE]filetype [2,LE]machine [4,LE]elf_version \
+	[WORD_SIZE,LE]_start [WORD_SIZE,LE](program_header & _phmask) [WORD_SIZE,LE](section_header & _shmask) \
+	[4,LE]0 \
+	[2,LE]_elf_header_size [2,LE]ph_entry_size [2,LE]ph_entry_count \
+	[2,LE]sh_entry_size [2,LE]sh_entry_count \
+	[2,LE]sh_names_entry_index
+
+#define SECTION_NAMES sh_names_entry_index := sh_entry_count - 1
+
+#if WORD_SIZE == 8
+#define _FLAGS_1 [4]0
+#define _FLAGS_2
+#elif WORD_SIZE == 4
+#define _FLAGS_1
+#define _FLAGS_2 [4]0
+#else
+#error "Unexpected word size"
+#endif
+
+#define PROGRAM_HEADER program_header:
+
+#define PROGRAM_HEADER_ENTRY _phmask := 0 - 1; _INCREMENT(ph_entry_count)
+
+#define END_PROGRAM_HEADER_ENTRY \
+	[4,LE]segment \
+	_FLAGS_1 [WORD_SIZE,LE]offset [WORD_SIZE,LE]address [WORD_SIZE,LE]0 \
+	[WORD_SIZE,LE]length [WORD_SIZE,LE]length _FLAGS_2 [WORD_SIZE,LE]0
+
+#define SECTION_HEADER section_header:
+
+#define SECTION_HEADER_ENTRY _shmask := 0 - 1; _INCREMENT(sh_entry_count)
+
+#define _CONCAT2(a, b) a ## b
+#define _CONCAT(a, b) _CONCAT2(a, b)
+
+#define END_SECTION_HEADER_ENTRY(secname) \
+	[4,LE]_CONCAT(secname, name_offset) [4,LE]_CONCAT(secname, type) [WORD_SIZE,LE]_CONCAT(secname, flags) \
+	[WORD_SIZE,LE]_CONCAT(secname, address) [WORD_SIZE,LE]_CONCAT(secname, offset) \
+	[WORD_SIZE,LE]_CONCAT(secname, length) [4,LE]_CONCAT(secname, link) \
+	[4,LE]0 [WORD_SIZE,LE]0 [WORD_SIZE,LE]_CONCAT(secname, entsize)
+
+abi.system_v = 0x00
+abi.netbsd   = 0x02
+abi.linux    = 0x03
+abi.gnu_hurd = 0x04
+abi.freebsd  = 0x09
+abi.openbsd  = 0x0C
+
+filetype.none  = 0x00
+filetype.rel   = 0x01
+filetype.exec  = 0x02
+filetype.dyn   = 0x03
+
+machine.none    = 0x00
+machine.sparc   = 0x02
+machine.x86     = 0x03
+machine.mips    = 0x08
+machine.arm     = 0x28
+machine.amd64   = 0x3E
+machine.aarch64 = 0xB7
+machine.risc_v  = 0xF3
+
+segment.null    = 0x00000000
+segment.load    = 0x00000001
+segment.dynamic = 0x00000002
+segment.interp  = 0x00000003
+segment.note    = 0x00000004
+segment.shlib   = 0x00000005
+segment.phdr    = 0x00000006
+segment.tls     = 0x00000007
+
+section.null          = 0x00
+section.progbits      = 0x01
+section.symtab        = 0x02
+section.strtab        = 0x03
+section.rela          = 0x04
+section.hash          = 0x05
+section.dynamic       = 0x06
+section.note          = 0x07
+section.notbits       = 0x08
+section.rel           = 0x09
+section.shlib         = 0x0A
+section.synsym        = 0x0B
+section.init_array    = 0x0E
+section.fini_array    = 0x0F
+section.preinit_array = 0x10
+section.group         = 0x11
+section.symtab_shndx  = 0x12
+section.num           = 0x13
+
+flag.write            = 0x01
+flag.alloc            = 0x02
+flag.execinstr        = 0x04
+flag.merge            = 0x10
+flag.strings          = 0x20
+flag.info_link        = 0x40
+flag.link_order       = 0x80
+flag.os_nonconforming = 0x100
+flag.group            = 0x200
+flag.tls              = 0x400
+flag.maskos           = 0x0ff00000
+flag.maskproc         = 0xf0000000
+flag.ordered          = 0x40000000
+flag.exclude          = 0x80000000
+
