@@ -77,7 +77,7 @@ _phmask := 0; _shmask := 0
 	[4,LE]_CONCAT(secname, name_offset) [4,LE]_CONCAT(secname, type) [WORD_SIZE,LE]_CONCAT(secname, flags) \
 	[WORD_SIZE,LE]_CONCAT(secname, address) [WORD_SIZE,LE]_CONCAT(secname, offset) \
 	[WORD_SIZE,LE]_CONCAT(secname, length) [4,LE]_CONCAT(secname, link) \
-	[4,LE]0 [WORD_SIZE,LE]0 [WORD_SIZE,LE]_CONCAT(secname, entsize)
+	[4,LE]_CONCAT(secname, info) [WORD_SIZE,LE]0 [WORD_SIZE,LE]_CONCAT(secname, entsize)
 
 abi.system_v = 0x00
 abi.netbsd   = 0x02
