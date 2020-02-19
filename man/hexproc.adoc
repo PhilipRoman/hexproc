@@ -25,6 +25,14 @@ hexproc - hexadecimal preprocessor for building binary files or hexdumps
 *-B*::
 	Forces writing binary data even if output is a TTY
 
+*-c*::
+	Enable colored output - bytes resulting from a single
+	formatter or string will be marked with the same color;
+	not compatible with *-b* or *-B*
+
+*-C*::
+	Forces colored output even if the output is not a TTY
+
 *-d*::
 	Enter debug mode
 

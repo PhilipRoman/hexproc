@@ -1,0 +1,112 @@
+#include "elf.hxp"
+
+abi = abi.system_v
+filetype = filetype.rel
+machine = machine.amd64
+endian = endian.little
+
+ELF_HEADER
+
+SECTION_HEADER
+	SECTION_HEADER_ENTRY
+		// entry index 0 is reserved
+		s0_name_offset = 0
+		s0_type = section.null
+		s0_flags = 0
+		s0_address = 0
+		s0_offset = 0
+		s0_length = 0
+		s0_link = 0
+		s0_info = 0
+		s0_entsize = 0
+	END_SECTION_HEADER_ENTRY(s0_)
+	SECTION_HEADER_ENTRY
+		s1_name_offset = .shstrtab.strtab - .shstrtab
+		s1_type = section.strtab
+		s1_flags = 0
+		s1_address = 0
+		s1_offset = .strtab
+		s1_length = .strtab.end - .strtab
+		s1_link = 0
+		s1_info = 0
+		s1_entsize = 0
+	END_SECTION_HEADER_ENTRY(s1_)
+	SECTION_HEADER_ENTRY
+		s2_name_offset = .shstrtab.data - .shstrtab
+		s2_type = section.progbits
+		s2_flags = flag.write | flag.alloc
+		s2_address = 0
+		s2_offset = .data
+		s2_length = .data.end - .data
+		s2_link = 0
+		s2_info = 0
+		s2_entsize = 0
+	END_SECTION_HEADER_ENTRY(s2_)
+	SECTION_HEADER_ENTRY
+		s3_name_offset = .shstrtab.symtab - .shstrtab
+		s3_type = section.symtab
+		s3_flags = flag.strings
+		s3_address = 0
+		s3_offset = .symtab
+		s3_length = .symtab.end - .symtab
+		s3_link = 1 // index of associated synbol table section
+		s3_info = 2 // number of symbols
+		s3_entsize = 4 + 1 + 1 + 2 + 8 + 8
+	END_SECTION_HEADER_ENTRY(s3_)
+	SECTION_HEADER_ENTRY
+		SECTION_NAMES
+		s4_name_offset = .shstrtab.shstrtab - .shstrtab
+		s4_type = section.strtab
+		s4_flags = flag.strings
+		s4_address = 0
+		s4_offset = .shstrtab
+		s4_length = .shstrtab.end - .shstrtab
+		s4_link = 0
+		s4_entsize = 0
+	END_SECTION_HEADER_ENTRY(s4_)
+PROGRAM_HEADER
+
+.strtab:
+00
+	.strtab.hello:
+		"hello" 00
+.strtab.end:
+
+.data:
+00
+	.data.hello:
+		"Hello, world!" 00
+	.data.hello.end:
+.data.end:
+
+.symtab:
+#if WORD_SIZE != 8
+#error "Expected 64-bit environment"
+#endif
+	// reserved entry
+	[4,LE]0 // name index in string table
+	[1]0 // type
+	[1]0 // visibility
+	[2,LE]0 // section index
+	[8,LE]0 // value
+	[8,LE]0 // size
+
+	[4,LE](.strtab.hello - .strtab) // name index in string table
+	[1](16 | 1) // type
+	[1]0 // visibility
+	[2,LE]2 // section index
+	[8,LE](.data.hello - .data) // value
+	[8,LE](.data.hello.end - .data.hello) // size
+.symtab.end:
+
+.shstrtab:
+	00
+	.shstrtab.data:
+		".data" 00
+	.shstrtab.strtab:
+		".strtab" 00
+	.shstrtab.symtab:
+		".symtab" 00
+	.shstrtab.shstrtab:
+		".shstrtab" 00
+.shstrtab.end:

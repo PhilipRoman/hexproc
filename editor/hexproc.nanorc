@@ -5,12 +5,12 @@ color brightwhite ".+"
 
 # Assignments
 color brightyellow "(:|:=|=).*"
-color green "[a-zA-Z0-9._]+[[:space:]]*?(:|:=|=)"
+color brightgreen "[a-zA-Z0-9._]+[[:space:]]*?(:|:=|=)"
 
 # Formatters
 color brightyellow "\([^)]*?\)"
 color brightyellow "][a-zA-Z0-9._]+"
-color brightcyan "\[[a-zA-Z0-9, ]*]"
+color brightcyan "\[[a-zA-Z0-9_, ]*]"
 
 # Keywords
 color brightcyan "\<(_Pad|_Align)\>"
@@ -18,7 +18,7 @@ color brightcyan "\<(_Pad|_Align)\>"
 # Symbols
 color brightwhite ","
 color red "\+|\-|\*|\/|\^|\||\&|\~"
-color brightblack "0x"
+color white "0x"
 
 # Strings
 color yellow "\"(\\.|[^\\\"])*\"|'(\\.|[^\\'])*'"

@@ -2,9 +2,16 @@
 
 HFILES := $(wildcard *.h)
 
-CC ?= gcc
-WINDOWS_CC := x86_64-w64-mingw32-gcc
 MUSL_CC := musl-gcc
+CC ?= gcc
+
+ifeq ($(OS),Windows_NT)
+WINDOWS_CC ?= gcc
+.DEFAULT_GOAL := windows
+else
+WINDOWS_CC ?= x86_64-w64-mingw32-gcc
+.DEFAULT_GOAL := linux
+endif
 
 CFLAGS := -std=c99 -pedantic -pipe \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
@@ -17,13 +24,12 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -O2
+RELEASE_FLAGS := -O2 -s
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
 
-.PHONY: linux windows musl test benchmark check valgrind sanitize analyze doc clean
-.DEFAULT_GOAL := linux
+.PHONY: linux windows musl test benchmark benchmark-linux benchmark-windows benchmark-musl check valgrind sanitize analyze doc clean
 
 ###############################################################
 ########################   COMPILING   ########################
@@ -35,17 +41,16 @@ linux: build/linux/hexproc
 build/linux/hexproc: build/linux/hexproc.o
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/linux/%.o: %.c $(HFILES)
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
+
 musl: build/musl/hexproc
 build/musl/hexproc: build/musl/hexproc.o
 	@mkdir -p build/musl
 	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/musl/%.o: %.c $(HFILES)
 	@mkdir -p build/musl
@@ -56,7 +61,6 @@ windows: build/windows/hexproc.exe
 build/windows/hexproc.exe: build/windows/hexproc.o
 	@mkdir -p build/windows
 	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-	strip $@
 
 build/windows/%.o: %.c $(HFILES)
 	@mkdir -p build/windows
@@ -86,9 +90,20 @@ build/debug/%.o: %.c $(HFILES)
 
 test: build/linux/hexproc
 	$(SHELL) test/test.sh
+ifeq ($(OS),Windows_NT)
+benchmark: benchmark-windows
+else
+benchmark: benchmark-linux
+endif
 
-benchmark: build/linux/hexproc
-	$(SHELL) test/benchmark.sh
+benchmark-linux: build/linux/hexproc
+	$(SHELL) test/benchmark.sh $<
+
+benchmark-musl: build/musl/hexproc
+	$(SHELL) test/benchmark.sh $<
+
+benchmark-windows: build/windows/hexproc.exe
+	$(SHELL) test/benchmark.sh $<
 
 valgrind: build/debug/hexproc
 	valgrind $(VALGRIND_FLAGS) ./$< example/showcase.hxp > /dev/null

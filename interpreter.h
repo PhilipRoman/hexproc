@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -6,29 +8,33 @@
 #include "formatter.h"
 #include "text.h"
 #include "calc.h"
+#include "sourcemap.h"
+#include "bytequeue.h"
+
+struct bytequeue buffer;
 
 /* The current byte offset */
 uint64_t offset = 0;
-const char * const HEX_DIGITS = "0123456789abcdef";
 
-static inline void buffer_append_octet(FILE *buffer, char high, char low) {
-	char temp[3];
-	temp[0] = high;
-	temp[1] = low;
-	temp[2] = ' ';
-	fwrite(temp, sizeof(temp), 1, buffer);
+static inline int hex2int(char c) {
+	if('0' <= c && c <= '9')
+		return c - '0';
+	if('A' <= c && c <= 'F')
+		return c - 'A' + 10;
+	if('a' <= c && c <= 'f')
+		return c - 'a' + 10;
+	return 0;
 }
 
 /* Runs first-pass processing on the given line and
 	writes intermediate results to the buffer file. */
-void process_line(char *line, FILE *buffer) {
+void process_line(const char *line, struct bytequeue *buffer) {
 	start:
 	line += scan_whitespace(line);
 	while(line[0]) {
 		switch(line[0]) {
 			case '/': {
-				line++;
-				if(line[0] == '/')
+				if((++line)[0] == '/')
 					goto end_loop;
 				break;
 			}
@@ -49,9 +55,10 @@ void process_line(char *line, FILE *buffer) {
 			case '[': {
 				struct formatter formatter;
 				line += scan_formatter(line, &formatter);
-				offset += formatter.nbytes;
 				add_formatter(formatter);
-				buffer_append_octet(buffer, '?', HEX_DIGITS[formatter.nbytes]);
+				add_sourcemap_entry(offset, SOURCE_FORMATTER);
+				offset += formatter.nbytes;
+				add_sourcemap_entry(offset, SOURCE_END);
 				break;
 			}
 			case '"': {
@@ -60,13 +67,12 @@ void process_line(char *line, FILE *buffer) {
 				// size includes quotes
 				size_t literal_size = scan_quoted_string(line);
 				size_t nbytes = literal_size - 2; // don't count the quotes
+				add_sourcemap_entry(offset, SOURCE_STRING);
 				offset += nbytes;
+				add_sourcemap_entry(offset, SOURCE_END);
 				line += literal_size;
 				for(size_t i = 0; i < nbytes; i++)
-					buffer_append_octet(buffer,
-						HEX_DIGITS[(literal[i] >> 4) & 0xf],
-						HEX_DIGITS[literal[i] & 0xf]
-					);
+					bytequeue_put(buffer, literal[i]);
 				break;
 			}
 			default: {
@@ -92,7 +98,8 @@ void process_line(char *line, FILE *buffer) {
 				// then, fall back to matching hex values
 				char octet[] = {'\0', '\0', '\0'};
 				line += scan_octet(line, octet);
-				fprintf(buffer, "%s ", octet);
+				char byte = (hex2int(octet[0]) << 4) | hex2int(octet[1]);
+				bytequeue_put(buffer, byte);
 				offset++;
 				break;
 			}
@@ -100,5 +107,5 @@ void process_line(char *line, FILE *buffer) {
 		line += scan_whitespace(line);
 	}
 	end_loop:
-	fputc('\n', buffer);
+	add_sourcemap_entry(offset, SOURCE_NEWLINE);
 }
