@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
 	line_number = 1;
 	offset = 0;
 
-	for(char byte; (byte = bytequeue_get(&buffer)) != EOF;)
+	for(int byte; (byte = bytequeue_get(&buffer)) != EOF;)
 		output_byte(byte, output);
 
 	finalize_output(output);
