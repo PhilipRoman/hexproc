@@ -177,6 +177,7 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 	};
 
 	bool use_default_size = true;
+	bool use_default_endian = true;
 
 	while(fmt[0]) {
 		fmt += scan_whitespace(fmt);
@@ -191,9 +192,9 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 				use_default_size = false;
 		} else if(isalpha(attr[0])) {
 			if(strcmp("LE", attr)==0)
-				result.big_endian = false;
+				result.big_endian = false, use_default_endian = false;
 			else if(strcmp("BE", attr)==0)
-				result.big_endian = true;
+				result.big_endian = true, use_default_endian = false;
 			else
 				result.datatype = resolve_datatype(attr);
 		}
@@ -202,8 +203,12 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		fmt += scan_char(fmt, ',');
 	}
 
+	double calc(const char *expr);
+
 	if(use_default_size)
 		result.nbytes = datatype_default_size(result.datatype);
+	if(use_default_endian)
+		result.big_endian = calc("__endian__") != 0;
 	return result;
 }
 

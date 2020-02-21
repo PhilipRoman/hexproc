@@ -3,7 +3,7 @@
 abi = abi.system_v
 filetype = filetype.rel
 machine = machine.amd64
-endian = endian.little
+__endian__ = LE
 
 ELF_HEADER
 
@@ -62,6 +62,7 @@ SECTION_HEADER
 		s4_offset = .shstrtab
 		s4_length = .shstrtab.end - .shstrtab
 		s4_link = 0
+		s4_info = 0
 		s4_entsize = 0
 	END_SECTION_HEADER_ENTRY(s4_)
 PROGRAM_HEADER
@@ -84,19 +85,19 @@ PROGRAM_HEADER
 #error "Expected 64-bit environment"
 #endif
 	// reserved entry
-	[4,LE]0 // name index in string table
+	[4]0 // name index in string table
 	[1]0 // type
 	[1]0 // visibility
-	[2,LE]0 // section index
-	[8,LE]0 // value
-	[8,LE]0 // size
+	[2]0 // section index
+	[8]0 // value
+	[8]0 // size
 
-	[4,LE](.strtab.hello - .strtab) // name index in string table
+	[4](.strtab.hello - .strtab) // name index in string table
 	[1](16 | 1) // type
 	[1]0 // visibility
-	[2,LE]2 // section index
-	[8,LE](.data.hello - .data) // value
-	[8,LE](.data.hello.end - .data.hello) // size
+	[2]2 // section index
+	[8](.data.hello - .data) // value
+	[8](.data.hello.end - .data.hello) // size
 .symtab.end:
 
 .shstrtab:
