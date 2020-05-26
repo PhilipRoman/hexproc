@@ -21,6 +21,14 @@ int fileno(FILE*);
 #include "debugger.h"
 #include "interpreter.h"
 
+#ifndef HEXPROC_VERSION
+#define HEXPROC_VERSION ""
+#endif
+
+#ifndef HEXPROC_DATE
+#define HEXPROC_DATE "?"
+#endif
+
 const size_t io_buffer_size = 8 * 1024;
 const size_t default_linebuffer_size = 256;
 
