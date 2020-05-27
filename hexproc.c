@@ -127,9 +127,9 @@ int main(int argc, char **argv) {
 	if(!debug_mode)
 		setvbuf(output, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
 
-	add_constant_label("LE", 0);
-	add_constant_label("BE", 1);
-	add_constant_label("__endian__", 1);
+	add_constant_label(strdup("LE"), 0);
+	add_constant_label(strdup("BE"), 1);
+	add_constant_label(strdup("__endian__"), 1);
 
 	if(debug_mode)
 		enter_debugger();
