@@ -22,11 +22,15 @@ int fileno(FILE*);
 #include "interpreter.h"
 
 #ifndef HEXPROC_VERSION
-#define HEXPROC_VERSION ""
+#define HEXPROC_VERSION "-"
 #endif
 
 #ifndef HEXPROC_DATE
 #define HEXPROC_DATE "?"
+#endif
+
+#ifndef HEXPROC_COMPILER
+#define HEXPROC_COMPILER "?"
 #endif
 
 const size_t io_buffer_size = 8 * 1024;
@@ -47,7 +51,8 @@ static void print_usage(void) {
 }
 
 static void print_version(void) {
-	printf("Hexproc %s [%s]\n", HEXPROC_VERSION, HEXPROC_DATE);
+	printf("Hexproc %s [%s, %s]\n",
+		HEXPROC_VERSION, HEXPROC_DATE, HEXPROC_COMPILER);
 }
 
 int main(int argc, char **argv) {

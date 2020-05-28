@@ -1,21 +1,24 @@
 .POSIX:
+.SUFFIXES:
 
 HFILES := $(wildcard *.h)
 
-MUSL_CC := musl-gcc
 CC ?= gcc
+
+.DEFAULT_GOAL := all
 
 ifeq ($(OS),Windows_NT)
 WINDOWS_CC ?= gcc
-.DEFAULT_GOAL := windows
+all := windows
 else
 WINDOWS_CC ?= x86_64-w64-mingw32-gcc
-.DEFAULT_GOAL := linux
+all := linux
 endif
 
-CFLAGS := -std=c99 -pedantic -pipe \
+CFLAGS += -std=c99 -pedantic -pipe \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
-	-DHEXPROC_VERSION="\"$(shell cat VERSION)\""
+	-DHEXPROC_VERSION="\"$(shell cat VERSION)\"" \
+	-DHEXPROC_COMPILER="\"$(CC)\""
 
 ANALYSIS_FLAGS := -Wfloat-equal -Wwrite-strings \
 	-Wswitch-enum -Wstrict-overflow=4 -DCLEANUP
@@ -27,9 +30,9 @@ DEBUG_FLAGS := -Og -g -DCLEANUP
 RELEASE_FLAGS := -O2 -s
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
-VALGRIND_FLAGS := --leak-check=full --leak-resolution=high --show-reachable=yes
+VALGRIND_FLAGS += --leak-check=full --leak-resolution=high --show-reachable=yes
 
-.PHONY: linux windows musl test benchmark benchmark-linux benchmark-windows benchmark-musl check valgrind sanitize analyze doc clean
+.PHONY: all linux windows test benchmark benchmark-linux benchmark-windows valgrind sanitize analyze doc clean install uninstall
 
 ###############################################################
 ########################   COMPILING   ########################
@@ -45,16 +48,6 @@ build/linux/hexproc: build/linux/hexproc.o
 build/linux/%.o: %.c $(HFILES)
 	@mkdir -p build/linux
 	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
-
-
-musl: build/musl/hexproc
-build/musl/hexproc: build/musl/hexproc.o
-	@mkdir -p build/musl
-	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-
-build/musl/%.o: %.c $(HFILES)
-	@mkdir -p build/musl
-	$(MUSL_CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
 
 
 windows: build/windows/hexproc.exe
@@ -90,6 +83,7 @@ build/debug/%.o: %.c $(HFILES)
 
 test: build/linux/hexproc
 	$(SHELL) test/test.sh
+
 ifeq ($(OS),Windows_NT)
 benchmark: benchmark-windows
 else
@@ -97,9 +91,6 @@ benchmark: benchmark-linux
 endif
 
 benchmark-linux: build/linux/hexproc
-	$(SHELL) test/benchmark.sh $<
-
-benchmark-musl: build/musl/hexproc
 	$(SHELL) test/benchmark.sh $<
 
 benchmark-windows: build/windows/hexproc.exe
@@ -113,10 +104,8 @@ sanitize: build/sanitized/hexproc
 	./$< example/showcase.hxp > /dev/null
 
 analyze: hexproc.c $(HFILES)
-	cppcheck $(CHECK_FLAGS) $^
 	$(CC) $(CFLAGS) $(ANALYSIS_FLAGS) -fsyntax-only $<
-
-check: analyze valgrind sanitize test
+	cppcheck $(CHECK_FLAGS) $^
 
 ###############################################################
 #####################   DOCUMENTATION   #######################
@@ -129,6 +118,24 @@ man/%.1: man/%.adoc
 
 man/%.html: man/%.adoc
 	asciidoctor -b html5 $<
+
+###############################################################
+#####################    INSTALLATION    ######################
+###############################################################
+
+#ifeq ($(OS),linux)
+
+install: man/hexproc.1 build/linux/hexproc
+	@cp -v man/hexproc.1 /usr/local/share/man/man1/ || true
+	@cp -v build/linux/hexproc /usr/local/bin/ || true
+	@echo ======== INSTALLED HEXPROC ========
+
+uninstall:
+	@rm -v /usr/local/share/man/man1/hexproc.1 || true
+	@rm -v /usr/local/bin/hexproc || true
+	@echo ======== UNINSTALLED HEXPROC ========
+
+#endif
 
 ###############################################################
 #######################   CLEANUP   ###########################
