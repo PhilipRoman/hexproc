@@ -18,7 +18,7 @@ const char HEX_DIGITS[] = "0123456789abcdef";
 
 void begin_color(FILE *file) {
 	if(output_mode == OUTPUT_HEX_COLOR) {
-		const int colors[] = {100, 42, 44, 45, 46, 47};
+		const int colors[] = {41, 42, 44, 45, 46};
 		static int color_index = 0;
 
 		fprintf(file, "\033[%dm", colors[color_index++]);
