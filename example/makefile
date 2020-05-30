@@ -1,19 +1,11 @@
 .PHONY: java elf clean
 
-JvmHello.class: jvm_hello.hxp classfile.hxp
-	cpp $< | hexproc -b > $@
+java:
+	@make -C java
 
-java: JvmHello.class
-	java -version
-	javap -verbose $<
-	java JvmHello
-
-elf: hello.o
-	readelf -a $<
-
-hello.o: object_hello.hxp elf.hxp
-	cpp $< | hexproc -b > $@
+elf:
+	@make -C elf
 
 clean:
-	rm -v *.class || true
-	rm -v *.o || true
+	@make -C java clean
+	@make -C elf clean
