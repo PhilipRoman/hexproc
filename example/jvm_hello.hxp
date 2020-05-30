@@ -1,25 +1,27 @@
 #include "classfile.hxp"
 
-CLASSFILE_MAGIC
+// class file magic bytes
+ca fe ba be
+
 VERSION(8, 0)
 
 CONSTANT_POOL
-	CLASS_ENTRY(jvmhello.class, "JvmHello")
-	CLASS_ENTRY(object.class, "java/lang/Object")
-	CLASS_ENTRY(printstream.class, "java/io/PrintStream")
-	CLASS_ENTRY(system.class, "java/lang/System")
+	CLASS(JvmHello, "JvmHello")
+	CLASS(Object, "java/lang/Object")
+	CLASS(PrintStream, "java/io/PrintStream")
+	CLASS(System, "java/lang/System")
 
-	STRING_ENTRY(message, "Hello, world!")
+	STRING(message, "Hello, world!")
 
-	FIELD_ENTRY(system.out, pool.system.class, "out", "Ljava/io/PrintStream;")
-	METHOD_ENTRY(printstream.println, pool.printstream.class, "println", "(Ljava/lang/String;)V")
+	FIELD(System.out, System, "out", "Ljava/io/PrintStream;")
+	METHOD(PrintStream.println, PrintStream, "println", "(Ljava/lang/String;)V")
 
-	UTF8_ENTRY(main.name, "main")
-	UTF8_ENTRY(main.type, "([Ljava/lang/String;)V")
-	UTF8_ENTRY(code_attribute.name, "Code")
+	UTF8(main.name, "main")
+	UTF8(main.type, "([Ljava/lang/String;)V")
+	UTF8(codeAttributeName, "Code")
 
-[2](modifier.public | modifier.final) // class access flags
-[2](pool.jvmhello.class) [2](pool.object.class) // this class, super class
+[2](public | final) // class access flags
+[2]JvmHello [2]Object // this class, super class
 
 TABLE_LENGTH(0) // interfaces
 
@@ -27,22 +29,22 @@ TABLE_LENGTH(0) // fields
 
 TABLE_LENGTH(1) // methods
 	// main method header
-	[2](modifier.public | modifier.static)
-	[2](pool.main.name) [2](pool.main.type) // name, type
+	[2](public | static)
+	[2]main.name [2]main.type // name, type
 	[2](1) // number of attributes
-	[2](pool.code_attribute.name) // 'Code'
-		[4](main.code_attribute.end - main.code_attribute.start) // 'Code' attribute size
-		main.code_attribute.start:
+	[2]codeAttributeName // 'Code'
+		[4](main.codeAttribute.end - main.codeAttribute) // 'Code' attribute size
+		main.codeAttribute:
 		[2](2) [2](1) // max stack size, max local size
 		[4](main.code.end - main.code) // code size
 		main.code:
-			getstatic(pool.system.out)
-			ldc(pool.message)
-			invokevirtual(pool.printstream.println)
+			getstatic(System.out)
+			ldc(message)
+			invokevirtual(PrintStream.println)
 			return_void
 		main.code.end:
 		[2](0) // exception table size
 		[2](0) // number of attributes for this attribute
-		main.code_attribute.end:
+		main.codeAttribute.end:
 
 TABLE_LENGTH(0) // attributes
