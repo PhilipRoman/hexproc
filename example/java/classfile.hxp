@@ -22,12 +22,12 @@ _next_index := 1
 
 #define INTEGER(name, value) ENTRY(int, name) [int]value
 
-#define FLOAT(name, value) ENTRY(int, name) [float]value
+#define FLOAT(name, value) ENTRY(float, name) [float]value
 
 // long and double entries take two slots
-#define LONG(name, value) ENTRY(int, name) INCREMENT(_next_index) [long]value
+#define LONG(name, value) ENTRY(long, name) INCREMENT(_next_index) [long]value
 
-#define DOUBLE(name, value) ENTRY(int, name) INCREMENT(_next_index) [double]value
+#define DOUBLE(name, value) ENTRY(double, name) INCREMENT(_next_index) [double]value
 
 #define CLASS(name, identifier) \
 	ENTRY(class, name) \
