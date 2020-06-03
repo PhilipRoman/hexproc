@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,26 @@ static void print_usage(void) {
 static void print_version(void) {
 	printf("Hexproc %s [%s, %s]\n",
 		HEXPROC_VERSION, HEXPROC_DATE, HEXPROC_COMPILER);
+}
+
+// special variables
+static void add_builtin_variables(void) {
+	add_constant_label(strdup("LE"), 0);
+	add_constant_label(strdup("BE"), 1);
+	add_constant_label(strdup("hexproc.endian"), 1);
+	const char *version = HEXPROC_VERSION;
+	long major = 0, minor = 0, patch = 0;
+	char *end;
+	version++; // skip the 'v' prefix
+	major = strtol(version, &end, 0);
+	if((version = end)[0] == '.')
+		minor = strtol(++version, &end, 0);
+	if((version = end)[0] == '.')
+		patch = strtol(++version, &end, 0);
+
+	add_constant_label(strdup("hexproc.major"), major);
+	add_constant_label(strdup("hexproc.minor"), minor);
+	add_constant_label(strdup("hexproc.patch"), patch);
 }
 
 int main(int argc, char **argv) {
@@ -132,9 +153,7 @@ int main(int argc, char **argv) {
 	if(!debug_mode)
 		setvbuf(output, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
 
-	add_constant_label(strdup("LE"), 0);
-	add_constant_label(strdup("BE"), 1);
-	add_constant_label(strdup("hexproc.endian"), 1);
+	add_builtin_variables();
 
 	if(debug_mode)
 		enter_debugger();

@@ -116,6 +116,9 @@ works just like in C.
 A few variables have a special role in hexproc. These variable names start with the prefix `hexproc.`:
 
 * hexproc.endian - sets the default endianness of formatters
+* hexproc.major - version release number of hexproc ("1" in "v1.2.3")
+* hexproc.minor - minor version number of hexproc ("2" in "v1.2.3")
+* hexproc.patch - patch number of hexproc ("3" in "v1.2.3")
 
 == Type Names
 The following identifiers may be used as type names:
