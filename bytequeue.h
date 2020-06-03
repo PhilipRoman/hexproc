@@ -21,10 +21,14 @@ struct bytequeue make_bytequeue(void) {
 	return q;
 }
 
-static inline void bytequeue_put(struct bytequeue *q, char c) {
+static void bytequeue_put(struct bytequeue *q, char c) {
 	if(q->len >= q->cap) {
 		q->cap = q->cap * 4; // can never be 0
 		q->array = realloc(q->array, q->cap);
+		if(!q->array) {
+			report_error("Out of memory - couldn't resize buffer");
+			return;
+		}
 	}
 	q->array[q->len++] = c;
 }
@@ -32,7 +36,7 @@ static inline void bytequeue_put(struct bytequeue *q, char c) {
 void bytequeue_rewind(struct bytequeue *q) {
 }
 
-static inline int bytequeue_get(struct bytequeue *q) {
+static int bytequeue_get(struct bytequeue *q) {
 	return q->pos >= q->len ? EOF : q->array[q->pos++];
 }
 

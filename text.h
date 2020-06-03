@@ -183,6 +183,10 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		fmt += scan_whitespace(fmt);
 		const char *attr;
 		fmt += scan_name(fmt, &attr);
+		if(!attr) {
+			report_error("Expected formatter attribute");
+			return result;
+		}
 		if(isdigit(attr[0])) {
 			// we're parsing a numeric byte width
 			result.nbytes = attr[0] - '0';
