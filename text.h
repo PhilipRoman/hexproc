@@ -10,6 +10,8 @@
 #include "diagnostic.h"
 #include "formatter.h"
 
+bool textfail;
+
 bool scan_char(const char *string, char expected) {
 	return string[0] == expected;
 }
@@ -36,7 +38,7 @@ size_t scan_balanced(const char *string, const char **out, const char *pattern) 
 	char closing = pattern[1];
 	if(string[0] != opening) {
 		report_error("Balanced string does not start with '%c'", opening);
-		*out = "";
+		textfail = true;
 		return 0;
 	}
 	unsigned stack = 1;
@@ -60,6 +62,7 @@ size_t scan_balanced(const char *string, const char **out, const char *pattern) 
 size_t scan_quoted_string(const char *string) {
 	if(string[0] != '"') {
 		report_error("Expected quoted string, got '%c'", string[0]);
+		textfail = true;
 		return 0;
 	}
 	unsigned i = 1;
@@ -81,7 +84,10 @@ size_t scan_name(const char *string, const char **out) {
 		char c = string[i];
 		bool namechar = c == '.' || c == '_' || isalnum(c);
 		if(!namechar) {
-			*out = i ? strndup(string, i) : NULL;
+			if(i > 0)
+				*out = strndup(string, i);
+			else
+				textfail = true;
 			return i;
 		}
 	}
@@ -169,6 +175,8 @@ size_t try_scan_assign(const char *line, const char **key, const char **value, e
 }
 
 static struct formatter create_formatter(const char *fmt, const char *expr) {
+	if(!fmt || !expr)
+		report_error("Missing formatter or expression");
 	struct formatter result = {
 		.expr = expr,
 		.datatype = HP_INT,
@@ -195,12 +203,13 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 			else
 				use_default_size = false;
 		} else if(isalpha(attr[0])) {
-			if(strcmp("LE", attr)==0)
-				result.big_endian = false, use_default_endian = false;
-			else if(strcmp("BE", attr)==0)
-				result.big_endian = true, use_default_endian = false;
-			else
+			if(strcmp("LE", attr)==0) {
+				result.big_endian = false; use_default_endian = false;
+			} else if(strcmp("BE", attr)==0) {
+				result.big_endian = true; use_default_endian = false;
+			} else {
 				result.datatype = resolve_datatype(attr);
+			}
 		}
 		free((char*)attr);
 		fmt += scan_whitespace(fmt);
@@ -219,10 +228,12 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 size_t scan_formatter(const char *string, struct formatter *out) {
 	const char *initial_string = string;
 
-	const char *fmt;
-	const char *expr;
+	const char *fmt = NULL;
+	const char *expr = NULL;
 
 	string += scan_balanced(string, &fmt, "[]");
+	if(textfail)
+		return 0;
 
 	string += scan_whitespace(string);
 
@@ -231,9 +242,9 @@ size_t scan_formatter(const char *string, struct formatter *out) {
 	else
 		string += scan_name(string, &expr);
 
-	*out = create_formatter(fmt, expr);
+	if(!textfail)
+		*out = create_formatter(fmt, expr);
 
 	free((char*) fmt);
-
 	return string - initial_string;
 }

@@ -55,6 +55,8 @@ void process_line(const char *line, struct bytequeue *buffer) {
 			case '[': {
 				struct formatter formatter;
 				line += scan_formatter(line, &formatter);
+				if(textfail)
+					goto end_loop;
 				add_formatter(formatter);
 				add_sourcemap_entry(offset, SOURCE_FORMATTER);
 				offset += formatter.nbytes;
@@ -66,6 +68,8 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				const char *literal = line + 1;
 				// size includes quotes
 				size_t literal_size = scan_quoted_string(line);
+				if(textfail)
+					goto end_loop;
 				size_t nbytes = literal_size - 2; // don't count the quotes
 				add_sourcemap_entry(offset, SOURCE_STRING);
 				offset += nbytes;
@@ -98,7 +102,8 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				// then, fall back to matching hex values
 				char octet[] = {'\0', '\0', '\0'};
 				line += scan_octet(line, octet);
-				char byte = (hex2int(octet[0]) << 4) | hex2int(octet[1]);
+				unsigned char byte = (hex2int(octet[0]) << 4)
+					| hex2int(octet[1]);
 				bytequeue_put(buffer, byte);
 				offset++;
 				break;
@@ -107,5 +112,6 @@ void process_line(const char *line, struct bytequeue *buffer) {
 		line += scan_whitespace(line);
 	}
 	end_loop:
+	textfail = false;
 	add_sourcemap_entry(offset, SOURCE_NEWLINE);
 }
