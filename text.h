@@ -220,6 +220,8 @@ size_t scan_formatter(const char *string, struct formatter *out) {
 
 	string += scan_balanced(string, &fmt, "[]");
 
+	string += scan_whitespace(string);
+
 	if(string[0] == '(')
 		string += scan_balanced(string, &expr, "()");
 	else
