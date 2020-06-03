@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 
 	add_constant_label(strdup("LE"), 0);
 	add_constant_label(strdup("BE"), 1);
-	add_constant_label(strdup("__endian__"), 1);
+	add_constant_label(strdup("hexproc.endian"), 1);
 
 	if(debug_mode)
 		enter_debugger();

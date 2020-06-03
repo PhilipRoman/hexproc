@@ -3,7 +3,7 @@
 abi = abi.system_v
 filetype = filetype.rel
 machine = machine.amd64
-__endian__ = LE
+hexproc.endian = LE
 
 ELF_HEADER
 

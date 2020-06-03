@@ -68,15 +68,6 @@ Hexproc input consists of the following tokens:
 	line markers, similar to how the C preprocessor uses them. This way,
 	you can get correct debug information after using `#include`.
 
-*expressions*::
-	Expressions are not standalone constructs, they are used
-	in forming *variables*. Expressions support the following binary
-	operators: `+`, `-`, `*`, `/`, `^` (power), `%` (remainder), `&`
-	(binary and), `|` (binary or) and `~` (binary xor). You can use decimal,
-	hexadecimal (prefix with 0x) or octal (prefix with 0) number literals.
-	You can also refer to variables by their names. Operator precedence
-	works just like in C.
-
 *labels*::
 	The syntax `LABEL_NAME:` will assign the current byte offset
 	to the specified name. Labels may freely appear between tokens.
@@ -109,6 +100,22 @@ Leading and trailing whitespace is ignored.
 
 Hexproc maps lines one-to-one so that line numbers
 are preserved.
+
+== Expression Syntax
+Expressions are not standalone constructs, they are used
+in forming *variables*. Expressions support the following binary
+operators: `+`, `-`, `*`, `/`, `^` (power), `%` (remainder), `&`
+(binary and), `|` (binary or) and `~` (binary xor). You can use decimal,
+hexadecimal (prefix with 0x) or octal (prefix with 0) number literals.
+The number literal format is specified by the compiler used to build
+hexproc.
+You can also refer to variables by their names. Operator precedence
+works just like in C.
+
+== Special Variables
+A few variables have a special role in hexproc. These variable names start with the prefix `hexproc.`:
+
+* hexproc.endian - sets the default endianness of formatters
 
 == Type Names
 The following identifiers may be used as type names:

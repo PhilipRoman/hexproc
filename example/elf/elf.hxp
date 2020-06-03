@@ -33,7 +33,7 @@ _phmask := 0; _shmask := 0
 #define _INCREMENT(name) name := name + 1;
 
 #define ELF_HEADER 7F "ELF" \
-	[1]_word_size_indicator [1](__endian__ + 1) [1]elf_version [1]abi [1]abi.version [7]0 \
+	[1]_word_size_indicator [1](hexproc.endian + 1) [1]elf_version [1]abi [1]abi.version [7]0 \
 	[2]filetype [2]machine [4]elf_version \
 	[WORD_SIZE]_start [WORD_SIZE](program_header & _phmask) [WORD_SIZE](section_header & _shmask) \
 	[4]0 \

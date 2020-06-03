@@ -208,7 +208,7 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 	if(use_default_size)
 		result.nbytes = datatype_default_size(result.datatype);
 	if(use_default_endian)
-		result.big_endian = calc("__endian__") != 0;
+		result.big_endian = calc("hexproc.endian") != 0;
 	return result;
 }
 

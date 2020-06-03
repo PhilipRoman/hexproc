@@ -39,8 +39,8 @@ expect 'a := 1; b := a; a := 2; [byte]b' '01'
 expect 'a = 1; a := a + 1; [byte]a' '02'
 
 echo 'Testing endian configuration'
-expect '[short]1 __endian__ := LE; [short]1' '00 01 01 00'
-expect '[short]1 __endian__ := LE; [short]1  __endian__ := BE; [short]1' '00 01 01 00 00 01'
+expect '[short]1 hexproc.endian := LE; [short]1' '00 01 01 00'
+expect '[short]1 hexproc.endian := LE; [short]1  hexproc.endian := BE; [short]1' '00 01 01 00 00 01'
 
 echo '===================='
 echo 'All tests succeeded!'
