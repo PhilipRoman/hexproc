@@ -3,7 +3,9 @@
 
 HFILES := $(wildcard *.h)
 
-CC ?= gcc
+ifeq ($(origin CC),default)
+CC = gcc
+endif
 
 .DEFAULT_GOAL := all
 
@@ -15,7 +17,9 @@ WINDOWS_CC ?= x86_64-w64-mingw32-gcc
 all := linux
 endif
 
-CFLAGS += -std=c99 -pedantic -pipe \
+ASCIIDOCTOR := $(strip $(shell which asciidoctor))
+
+CFLAGS += -std=c99 -pedantic \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
 	-DHEXPROC_VERSION="\"$(shell cat VERSION)\"" \
 	-DHEXPROC_COMPILER="\"$(CC)\""
@@ -111,13 +115,21 @@ analyze: hexproc.c $(HFILES)
 #####################   DOCUMENTATION   #######################
 ###############################################################
 
+ifneq ($(ASCIIDOCTOR),) # if not empty
 doc: man/hexproc.1 man/hexproc.html
 
 man/%.1: man/%.adoc
-	asciidoctor -b manpage $<
+	$(ASCIIDOCTOR) -b manpage $<
 
 man/%.html: man/%.adoc
-	asciidoctor -b html5 $<
+	$(ASCIIDOCTOR) -b html5 $<
+else
+doc:
+	@echo asciidoctor not found, cannot generate documentation
+
+man/%:
+	@echo asciidoctor not found, cannot generate documentation
+endif
 
 ###############################################################
 #####################    INSTALLATION    ######################
@@ -125,14 +137,20 @@ man/%.html: man/%.adoc
 
 #ifeq ($(OS),linux)
 
-install: man/hexproc.1 build/linux/hexproc
-	@cp -v man/hexproc.1 /usr/local/share/man/man1/ || true
-	@cp -v build/linux/hexproc /usr/local/bin/ || true
+install: doc build/linux/hexproc
+	@mkdir -p                     /usr/local/share/doc/hexproc/
+	@cp -rv  example              /usr/local/share/doc/hexproc/
+ifneq ($(ASCIIDOCTOR),) # if not empty
+	@cp -v   man/hexproc.html     /usr/local/share/doc/hexproc/
+	@cp -v   man/hexproc.1        /usr/local/share/man/man1/
+endif
+	@cp -v   build/linux/hexproc  /usr/local/bin/
 	@echo ======== INSTALLED HEXPROC ========
 
 uninstall:
-	@rm -v /usr/local/share/man/man1/hexproc.1 || true
-	@rm -v /usr/local/bin/hexproc || true
+	@rm -v   /usr/local/share/man/man1/hexproc.1  || true
+	@rm -rv  /usr/local/share/doc/hexproc/        || true
+	@rm -v   /usr/local/bin/hexproc               || true
 	@echo ======== UNINSTALLED HEXPROC ========
 
 #endif
@@ -142,6 +160,6 @@ uninstall:
 ###############################################################
 
 clean:
-	@rm -r -v build || true
-	@rm -v man/hexproc.1 || true
-	@rm -v man/hexproc.html || true
+	@rm -rv  build  || true
+	@rm -v   man/hexproc.1  || true
+	@rm -v   man/hexproc.html  || true
