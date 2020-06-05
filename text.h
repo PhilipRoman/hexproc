@@ -13,16 +13,31 @@
 bool textfail;
 
 bool scan_char(const char *string, char expected) {
-	return string[0] == expected;
+	return textfail = (string[0] == expected);
 }
 
-size_t scan_octet(const char *string, char *out) {
-	out[0] = string[0];
-	if(!string[1]) {
-		report_error("Unfinished octet (starts with %c)", string[0]);
+static int hex2int(char c) {
+	if('0' <= c && c <= '9')
+		return c - '0';
+	if('A' <= c && c <= 'F')
+		return c - 'A' + 10;
+	if('a' <= c && c <= 'f')
+		return c - 'a' + 10;
+	return -1;
+}
+
+size_t scan_octet(const char *string, int *out) {
+	int high, low;
+
+	if((high = hex2int(string[0])) < 0 || !string[1]) {
+		textfail = true;
 		return 1;
 	}
-	out[1] = string[1];
+	if((low = hex2int(string[1])) < 0) {
+		textfail = true;
+		return 2;
+	}
+	*out = (high << 4) | low;
 	return 2;
 }
 

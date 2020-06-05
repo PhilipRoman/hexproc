@@ -16,22 +16,13 @@ struct bytequeue buffer;
 /* The current byte offset */
 uint64_t offset = 0;
 
-static inline int hex2int(char c) {
-	if('0' <= c && c <= '9')
-		return c - '0';
-	if('A' <= c && c <= 'F')
-		return c - 'A' + 10;
-	if('a' <= c && c <= 'f')
-		return c - 'a' + 10;
-	return 0;
-}
-
 /* Runs first-pass processing on the given line and
 	writes intermediate results to the buffer file. */
 void process_line(const char *line, struct bytequeue *buffer) {
 	start:
 	line += scan_whitespace(line);
 	while(line[0]) {
+		textfail = false;
 		switch(line[0]) {
 			case '/': {
 				if((++line)[0] == '/')
@@ -100,10 +91,10 @@ void process_line(const char *line, struct bytequeue *buffer) {
 					break;
 				}
 				// then, fall back to matching hex values
-				char octet[] = {'\0', '\0', '\0'};
-				line += scan_octet(line, octet);
-				unsigned char byte = (hex2int(octet[0]) << 4)
-					| hex2int(octet[1]);
+				int byte;
+				line += scan_octet(line, &byte);
+				if(textfail)
+					break;
 				bytequeue_put(buffer, byte);
 				offset++;
 				break;
