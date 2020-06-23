@@ -18,7 +18,7 @@
 /* Either an operator or a numeric value */
 struct yard_value {
 	union {
-		double num;
+		long double num;
 		char op;
 	} content;
 	char isnum;
@@ -33,10 +33,10 @@ struct yard {
 
 struct operand_stack {
 	int len;
-	double stack[OPERAND_STACK_SIZE];
+	long double stack[OPERAND_STACK_SIZE];
 };
 
-double calc(const char *expr);
+long double calc(const char *expr);
 
 // IMPLEMENTATION STARTS HERE
 
@@ -67,11 +67,11 @@ bool leftassoc(char op) {
 	}
 }
 
-/* Attempts to convert the double to an integer,
+/* Attempts to convert the long double to an integer,
 	handling the case when it has no such representation */
-long to_integer(double d) {
+long to_integer(long double d) {
 	if(!isfinite(d)) {
-		report_error("%f cannot be converted to an integer", d);
+		report_error("%Lf cannot be converted to an integer", d);
 		return 0;
 	}
 	return (long)d;
@@ -79,14 +79,14 @@ long to_integer(double d) {
 
 /* evaluates the result of two arguments applied to
 	binary operator */
-double op_eval(char op, double a, double b) {
+long double op_eval(char op, long double a, long double b) {
 	switch(op) {
 		case '+': return a + b;
 		case '-': return a - b;
 		case '*': return a * b;
 		case '/': return a / b;
-		case '%': return fmod(a, b);
-		case '^': return pow(a, b);
+		case '%': return fmodl(a, b);
+		case '^': return powl(a, b);
 		case '&': return to_integer(a) & to_integer(b);
 		case '|': return to_integer(a) | to_integer(b);
 		case '~': return to_integer(a) ^ to_integer(b);
@@ -133,7 +133,7 @@ char yard_peek(struct yard *yard) {
 	return yard->stack[yard->slen-1];
 }
 
-void yard_add_num(struct yard *yard, double x) {
+void yard_add_num(struct yard *yard, long double x) {
 	struct yard_value value = {
 		.isnum = 1,
 		.content = {.num = x},
@@ -162,7 +162,7 @@ void yard_add_op(struct yard *yard, char op) {
 	yard_push(yard, op);
 }
 
-void operand_push(struct operand_stack *stack, double x) {
+void operand_push(struct operand_stack *stack, long double x) {
 	if(stack->len >= OPERAND_STACK_SIZE) {
 		report_error("Operand stack overflow");
 		return;
@@ -170,7 +170,7 @@ void operand_push(struct operand_stack *stack, double x) {
 	stack->stack[stack->len++] = x;
 }
 
-double operand_pop(struct operand_stack *stack) {
+long double operand_pop(struct operand_stack *stack) {
 	if(!stack->len) {
 		report_error("Operand stack underflow");
 		return NAN;
@@ -178,7 +178,7 @@ double operand_pop(struct operand_stack *stack) {
 	return stack->stack[--stack->len];
 }
 
-double yard_compute(struct yard *yard) {
+long double yard_compute(struct yard *yard) {
 	/* pop remaining operators into output queue */
 	while(yard->slen) {
 		struct yard_value value = {
@@ -193,9 +193,9 @@ double yard_compute(struct yard *yard) {
 		if(v.isnum) {
 			operand_push(&stack, v.content.num);
 		} else {
-			double b = operand_pop(&stack);
-			double a = operand_pop(&stack);
-			double result = op_eval(v.content.op, a, b);
+			long double b = operand_pop(&stack);
+			long double a = operand_pop(&stack);
+			long double result = op_eval(v.content.op, a, b);
 			operand_push(&stack, result);
 		}
 	}
@@ -228,21 +228,21 @@ int namestack_contains(const char *name) {
 	return 0;
 }
 
-double calc(const char *expr) {
+long double calc(const char *expr) {
 	struct yard yard = {.slen = 0, .qlen = 0};
 	expr += scan_whitespace(expr);
 	while(expr[0]) {
 		if(isdigit(expr[0])) {
 			const char *numstr;
 			expr += scan_name(expr, &numstr);
-			double num = atof(numstr);
+			long double num = strtold(numstr, NULL);
 			free((char*) numstr);
 			yard_add_num(&yard, num);
 		} else if(expr[0] == '.' || expr[0] == '_' || isalpha(expr[0])) {
 			const char *name;
 			expr += scan_name(expr, &name);
 			struct label *label = lookup_label(name);
-			double result;
+			long double result;
 			if(!label) {
 				report_error("Unknown identifier: \"%s\"", name);
 				result = NAN;

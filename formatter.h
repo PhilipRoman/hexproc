@@ -78,7 +78,7 @@ size_t datatype_default_size(enum datatype t) {
 	}
 }
 
-void format_value(double value, struct formatter fmt, uint8_t *out, size_t *nbytes) {
+void format_value(long double value, struct formatter fmt, uint8_t *out, size_t *nbytes) {
 	assert(sizeof(float) == 4);
 	assert(sizeof(double) == 8);
 
@@ -89,14 +89,12 @@ void format_value(double value, struct formatter fmt, uint8_t *out, size_t *nbyt
 		case HP_SHORT:
 		case HP_BYTE: {
 			if(!isfinite(value))
-				report_error("%f cannot be converted to an integer", value);
+				report_error("%Lf cannot be converted to an integer", value);
 			if(value > INT64_MAX) {
 				// also includes positive infinity
 				v = UINT64_MAX;
 			} else if(isinf(value) < 0) {
 				// negative infinity
-				v = 0;
-			} else if(value < 0) {
 				v = 0;
 			} else if(isnan(value)) {
 				v = 0;
@@ -111,7 +109,8 @@ void format_value(double value, struct formatter fmt, uint8_t *out, size_t *nbyt
 			break;
 		}
 		case HP_DOUBLE: {
-			memcpy(&v, &value, sizeof(double));
+			double d = (double) value;
+			memcpy(&v, &d, sizeof(double));
 			break;
 		}
 	}

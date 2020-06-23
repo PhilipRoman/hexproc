@@ -231,7 +231,7 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		fmt += scan_char(fmt, ',');
 	}
 
-	double calc(const char *expr);
+	long double calc(const char *expr);
 
 	if(use_default_size)
 		result.nbytes = datatype_default_size(result.datatype);
