@@ -203,7 +203,7 @@ long double yard_compute(struct yard *yard) {
 }
 
 const char *namestack[NAME_STACK_SIZE];
-int namestack_len = 0;
+unsigned namestack_len = 0;
 
 void namestack_push(const char *name) {
 	if(namestack_len >= NAME_STACK_SIZE) {
@@ -241,22 +241,22 @@ long double calc(const char *expr) {
 		} else if(expr[0] == '.' || expr[0] == '_' || isalpha(expr[0])) {
 			const char *name;
 			expr += scan_name(expr, &name);
-			struct label *label = lookup_label(name);
+			struct label label;
 			long double result;
-			if(!label) {
+			if(!lookup_label(name, &label)) {
 				report_error("Unknown identifier: \"%s\"", name);
 				result = NAN;
-			} else if(label->expr) {
+			} else if(label.expr) {
 				if(namestack_contains(name)) {
 					report_error("Recursive label: \"%s\"", name);
 					free((char*) name);
 					return NAN;
 				}
 				namestack_push(name);
-				result = calc(label->expr);
+				result = calc(label.expr);
 				namestack_pop();
 			} else {
-				result = label->constant;
+				result = label.constant;
 			}
 			free((char*) name);
 			yard_add_num(&yard, result);

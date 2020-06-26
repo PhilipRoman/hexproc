@@ -41,7 +41,7 @@ bool take_next_formatter(struct formatter *out) {
 }
 
 void cleanup_formatters(void) {
-	for(int i = 0; i < formatqueue_len; i++)
+	for(unsigned i = 0; i < formatqueue_len; i++)
 		OPTIONAL_FREE(formatqueue[i].expr);
 	OPTIONAL_FREE(formatqueue);
 }
@@ -75,6 +75,9 @@ size_t datatype_default_size(enum datatype t) {
 		case HP_INT: return 4;
 		case HP_SHORT: return 2;
 		case HP_BYTE: return 1;
+		default:
+			report_error("Invalid data type: %d", (int)t);
+			return 0;
 	}
 }
 
@@ -120,13 +123,13 @@ void format_value(long double value, struct formatter fmt, uint8_t *out, size_t 
 	// result: 33 22 11
 	if(fmt.big_endian) {
 		unsigned shift = fmt.nbytes * 8;
-		for(int i = 0; i < fmt.nbytes; i++) {
+		for(unsigned i = 0; i < fmt.nbytes; i++) {
 			shift -= 8;
 			bytes[i] = (v >> shift) & 0xFF;
 		}
 	} else {
 		unsigned shift = 0;
-		for(int i = 0; i < fmt.nbytes; i++) {
+		for(unsigned i = 0; i < fmt.nbytes; i++) {
 			bytes[i] = (v >> shift) & 0xFF;
 			shift += 8;
 		}

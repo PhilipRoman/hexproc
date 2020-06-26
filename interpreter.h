@@ -78,13 +78,13 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				if(assignment_size) {
 					switch(mode) {
 						case ASSIGN_LABEL:
-							add_constant_label(key, offset);
+							set_constant_label(key, offset);
 							break;
 						case ASSIGN_LAZY:
-							add_expr_label(key, value);
+							set_expr_label(key, value);
 							break;
 						case ASSIGN_IMMEDIATE:
-							add_constant_label(key, calc(value));
+							set_constant_label(key, calc(value));
 							break;
 					}
 					line += assignment_size;

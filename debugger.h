@@ -17,7 +17,7 @@ unsigned breaklist_len = 0;
 unsigned breaklist_cap = 0;
 
 bool exists_breakpoint(uint64_t b) {
-	for(int i = 0; i < breaklist_len; i++)
+	for(unsigned i = 0; i < breaklist_len; i++)
 		if(breaklist[i] == b)
 			return true;
 	return false;
@@ -36,6 +36,22 @@ static void add_breakpoint(uint64_t linenum) {
 		breaklist = realloc(breaklist, breaklist_cap * sizeof(breaklist[0]));
 	}
 	breaklist[breaklist_len++] = linenum;
+}
+
+void list_variables(void) {
+	printf("  List of variables:\n");
+	for(unsigned i = 0; i < 64; i++) {
+		struct label *label = &labelmap[i];
+		while(label && label->name) {
+			if(label->expr)
+				printf("    %2u(%u): %s -> \"%s\"\n",
+					i, strhash(label->name), label->name, label->expr);
+			else
+				printf("    %2u(%u): %s -> \"%u\"\n",
+					i, strhash(label->name), label->name, label->constant);
+			label = label->next;
+		}
+	}
 }
 
 bool handle_debug_command(void) {
@@ -57,14 +73,7 @@ bool handle_debug_command(void) {
 		break_on_next = true;
 		return false;
 	} else if(!strcmp("vars", command)) {
-		printf("  List of variables:\n");
-		for(unsigned i = 0; i < labellist_len; i++) {
-			struct label label = labellist[i];
-			if(label.expr)
-				printf("    %s -> \"%s\"\n", label.name, label.expr);
-			else
-				printf("    %s -> \"%u\"\n", label.name, label.constant);
-		}
+		list_variables();
 	} else if(!strcmp("help", command)) {
 		printf("  Available commands:\n");
 		printf("    break NUMBER - set a breakpoint before given line number\n");

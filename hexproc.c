@@ -58,9 +58,9 @@ static void print_version(void) {
 
 // special variables
 static void add_builtin_variables(void) {
-	add_constant_label(strdup("LE"), 0);
-	add_constant_label(strdup("BE"), 1);
-	add_constant_label(strdup("hexproc.endian"), 1);
+	set_constant_label(strdup("LE"), 0);
+	set_constant_label(strdup("BE"), 1);
+	set_constant_label(strdup("hexproc.endian"), 1);
 	const char *version = HEXPROC_VERSION;
 	long major = 0, minor = 0, patch = 0;
 	char *end;
@@ -71,9 +71,9 @@ static void add_builtin_variables(void) {
 	if((version = end)[0] == '.')
 		patch = strtol(++version, &end, 0);
 
-	add_constant_label(strdup("hexproc.major"), major);
-	add_constant_label(strdup("hexproc.minor"), minor);
-	add_constant_label(strdup("hexproc.patch"), patch);
+	set_constant_label(strdup("hexproc.major"), major);
+	set_constant_label(strdup("hexproc.minor"), minor);
+	set_constant_label(strdup("hexproc.patch"), patch);
 }
 
 int main(int argc, char **argv) {
