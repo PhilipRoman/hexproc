@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "diagnostic.h"
+#include "debugger.h"
 #include "label.h"
 #include "formatter.h"
 #include "text.h"
@@ -19,6 +20,10 @@ uint64_t offset = 0;
 /* Runs first-pass processing on the given line and
 	writes intermediate results to the buffer file. */
 void process_line(const char *line, struct bytequeue *buffer) {
+	if(debug_mode && (exists_breakpoint(line_number) || break_on_next)) {
+		break_on_next = false;
+		enter_debugger();
+	}
 	start:
 	line += scan_whitespace(line);
 	while(line[0]) {
@@ -69,6 +74,15 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				for(size_t i = 0; i < nbytes; i++)
 					bytequeue_put(buffer, literal[i]);
 				break;
+			}
+
+			case 'd': {
+				if(!memcmp(line, "debugger", strlen("debugger"))) {
+					line += strlen("debugger");
+					if(debug_mode)
+						enter_debugger();
+				}
+				// if not matched, fall through
 			}
 			default: {
 				// first, try matching an assignment

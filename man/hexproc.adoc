@@ -132,16 +132,16 @@ The following identifiers may be used as type names:
 Hexproc comes with a built-in debugger, which you can activate using the `-d` option. The debugger supports the following commands:
 
 *break* _NUMBER_, *brk* _NUMBER_::
-	Ccreates a breakpoint on given line number. When execution reaches a
+	Creates a breakpoint on given line number. When execution reaches a
 	line with a breakpoint, it will enter the debugger before evaluating the line
 
 *run*, *resume*:: Exits the debugger and resumes execution.
 
 *step*, *s*:: Executes next line and enters debugger again.
 
-*vars*:: Displays the current state of all variables
+*vars*, *v*, *list*, *l*:: Displays the current state of all variables
 
-*help*:: Shows help on how to use the debugger
+*help*, *h*, *?*:: Shows help on how to use the debugger
 
 == See Also
 xxd(1), cpp(1)

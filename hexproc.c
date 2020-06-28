@@ -124,16 +124,14 @@ int main(int argc, char **argv) {
 		// not a fatal error, no need to exit
 	}
 
-	FILE *input;
-
 	if(optind >= argc) {
 		// no file argument given
-		input = stdin;
+		current_input = stdin;
 		current_file_name = "<stdin>";
 	} else {
-		input = fopen(argv[optind], "r");
+		current_input = fopen(argv[optind], "r");
 		current_file_name = argv[optind];
-		if(!input) {
+		if(!current_input) {
 			fprintf(stderr, "Couldn't open file \"%s\" (error %d)\n", argv[optind], (int) errno);
 			return errno;
 		}
@@ -146,26 +144,22 @@ int main(int argc, char **argv) {
 	char *shared_buffer = malloc(io_buffer_size * 2);
 
 
-	if(!debug_mode)
-		setvbuf(input, shared_buffer, _IOFBF, io_buffer_size);
+	if(!debug_mode && !isatty(fileno(current_input)))
+		setvbuf(current_input, shared_buffer, _IOFBF, io_buffer_size);
 
 	FILE *output = stdout;
-	if(!debug_mode)
+	if(!debug_mode && !isatty(fileno(output)))
 		setvbuf(output, shared_buffer + io_buffer_size, _IOFBF, io_buffer_size);
 
 	add_builtin_variables();
 
-	if(debug_mode)
+	if(debug_mode && isatty(fileno(stdin)))
 		enter_debugger();
 
 	struct bytequeue buffer = make_bytequeue();
 
-	while((nread = getline(&line, &len, input)) != -1) {
+	while((nread = getline(&line, &len, current_input)) != -1) {
 		line_number++;
-		if(debug_mode && (exists_breakpoint(line_number) || break_on_next)) {
-			break_on_next = false;
-			enter_debugger();
-		}
 		process_line(line, &buffer);
 	}
 
@@ -182,8 +176,8 @@ int main(int argc, char **argv) {
 	fflush(output);
 	if(output != stdout)
 		fclose(output);
-	if(input != stdin)
-		fclose(input);
+	if(current_input != stdin)
+		fclose(current_input);
 
 	cleanup_formatters();
 	cleanup_labels();

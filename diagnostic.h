@@ -7,6 +7,7 @@
 
 uint64_t line_number = 0;
 const char *current_file_name = "<unknown>";
+FILE *current_input = NULL;
 
 void report_error(const char *fmt, ...) {
 	va_list v;

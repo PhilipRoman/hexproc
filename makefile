@@ -19,7 +19,7 @@ endif
 
 ASCIIDOCTOR := $(strip $(shell which asciidoctor))
 
-CFLAGS += -std=c99 -Wall -Wextra -Wpedantic -pedantic \
+CFLAGS += -std=c99 -Wall -Wpedantic -pedantic \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
 	-DHEXPROC_VERSION="\"$(shell cat VERSION)\"" \
 	-DHEXPROC_COMPILER="\"$(CC)\""
