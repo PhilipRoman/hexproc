@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # cd to repository root if necessary
 if [ -f 'test.sh' ]; then
 	cd ..
@@ -11,9 +13,16 @@ fi
 expect() {
 	#  $1 is input
 	#  $2 is expected output
-	if [ "$2" != "$(echo "$1" | build/linux/hexproc)" ]; then
+	output="$(echo "$1" | build/linux/hexproc)"
+	if [ "$2" != "$output" ]; then
 		echo '============================'
-		echo "Assertion failed: $1 != $2"
+		echo "Assertion failed"
+		echo "Input:"
+		echo "\t$1"
+		echo "Expected output:"
+		echo "\t$2"
+		echo "Actual output:"
+		echo "\t$output"
 		exit 1
 	fi
 }
@@ -26,10 +35,12 @@ echo 'Testing string literals'
 expect '"Hello"' '48 65 6c 6c 6f'
 expect '"Hel"   "lo"' '48 65 6c 6c 6f'
 
-echo 'Testing formatters'
+echo 'Testing formatters & expressions'
 expect '[int](1 + 2)' '00 00 00 03'
 expect '[int,LE](3 * 4 - 1)' '0b 00 00 00'
 expect '[3,  int]3' '00 00 03'
+expect '[int](3 * (1 + 2))' '00 00 00 09'
+expect '[byte](2^3+1) [byte](0-2^4)' '09 f0'
 
 echo 'Testing variables'
 expect 'cc cc cc a: [byte]a' 'cc cc cc 03'

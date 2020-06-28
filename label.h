@@ -27,7 +27,7 @@ bool lookup_label(const char *name, struct label *result) {
 	return false;
 }
 
-static void set_label(const char *name, unsigned constant, const char *expr) {
+static void set_label(const char *name, long double constant, const char *expr) {
 	unsigned bucket = strhash(name) & 63;
 	struct label newlabel = {.name = name, .expr = expr, .constant = constant};
 	struct label *node = &labelmap[bucket];

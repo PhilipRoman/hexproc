@@ -10,6 +10,8 @@
 #include "text.h"
 #include "label.h"
 
+bool mathfail = false;
+
 #define YARD_STACK_SIZE 64
 #define YARD_QUEUE_SIZE 64
 #define OPERAND_STACK_SIZE 64
@@ -32,7 +34,7 @@ struct yard {
 };
 
 struct operand_stack {
-	int len;
+	unsigned len;
 	long double stack[OPERAND_STACK_SIZE];
 };
 
@@ -52,8 +54,10 @@ int prec(char op) {
 		case '/':
 		case '%': return 200;
 		case '^': return 300;
+		case '(':
+		case ')': return 1000;
 		default: {
-			report_error("Bad operator: (char %d)", (int) op);
+			// don't bother reporting errors, other functions will do it
 			return 0;
 		}
 	}
@@ -91,7 +95,9 @@ long double op_eval(char op, long double a, long double b) {
 		case '|': return to_integer(a) | to_integer(b);
 		case '~': return to_integer(a) ^ to_integer(b);
 		default: {
-			report_error("Bad operator (char %d)", (int) op);
+			mathfail = true;
+			report_error("Bad operator ((char)%d = '%c')",
+				(int)op, (char)op);
 			return NAN;
 		};
 	}
@@ -100,6 +106,7 @@ long double op_eval(char op, long double a, long double b) {
 /* appends the value to end of queue */
 void yard_put(struct yard *yard, struct yard_value v) {
 	if(yard->qlen >= YARD_QUEUE_SIZE) {
+		mathfail = true;
 		report_error("Shunting yard queue overflow");
 		return;
 	}
@@ -109,6 +116,7 @@ void yard_put(struct yard *yard, struct yard_value v) {
 /* puts the value on top of stack */
 void yard_push(struct yard *yard, char op) {
 	if(yard->slen >= YARD_STACK_SIZE) {
+		mathfail = true;
 		report_error("Shunting yard stack overflow");
 		return;
 	}
@@ -118,6 +126,7 @@ void yard_push(struct yard *yard, char op) {
 /* returns and removes the operator at the top of stack */
 char yard_pop(struct yard *yard) {
 	if(!yard->slen) {
+		mathfail = true;
 		report_error("Shunting yard stack underflow");
 		return '?';
 	}
@@ -127,7 +136,6 @@ char yard_pop(struct yard *yard) {
 /* returns the operator at the top of stack */
 char yard_peek(struct yard *yard) {
 	if(!yard->slen) {
-		report_error("Shunting yard stack underflow");
 		return '?';
 	}
 	return yard->stack[yard->slen-1];
@@ -140,30 +148,44 @@ void yard_add_num(struct yard *yard, long double x) {
 	};
 	yard_put(yard, value);
 }
+/* https://en.wikipedia.org/wiki/Shunting-yard_algorithm */
 
 void yard_add_op(struct yard *yard, char op) {
+
+#define STACK_NOT_EMPTY (yard->slen)
+
+#define TOP_HAS_GREATER_PRECEDENCE (prec(yard_peek(yard))>prec(op))
+
+#define EQUAL_BUT_TOP_IS_LEFT_ASSOC \
+	(prec(yard_peek(yard))==prec(op) && leftassoc(yard_peek(yard)))
+
+#define TOP_IS_NOT_LEFT_PAREN (yard_peek(yard) != '(')
+
 	while(
-		/* while stack has elements */
-			yard->slen
-		&& (
-			/* and precedence of top element is greater */
-			prec(yard_peek(yard)) > prec(op)
-			||
-			/* ...or equal, but top is left-associative*/
-			(prec(yard_peek(yard)) == prec(op) && leftassoc(yard_peek(yard)))
-		)
+		STACK_NOT_EMPTY
+		&& (TOP_HAS_GREATER_PRECEDENCE || EQUAL_BUT_TOP_IS_LEFT_ASSOC)
+		&& TOP_IS_NOT_LEFT_PAREN
 	) {
+		// pop operators from the operator stack onto the output queue
 		struct yard_value value = {
 			.isnum = 0,
 			.content = {.op = yard_pop(yard)},
 		};
 		yard_put(yard, value);
+		if(mathfail)
+			return;
 	}
 	yard_push(yard, op);
+
+#undef STACK_NOT_EMPTY
+#undef TOP_HAS_GREATER_PRECEDENCE
+#undef EQUAL_BUT_TOP_IS_LEFT_ASSOC
+#undef TOP_IS_NOT_LEFT_PAREN
 }
 
 void operand_push(struct operand_stack *stack, long double x) {
 	if(stack->len >= OPERAND_STACK_SIZE) {
+		mathfail = true;
 		report_error("Operand stack overflow");
 		return;
 	}
@@ -186,8 +208,10 @@ long double yard_compute(struct yard *yard) {
 			.content = {.op = yard_pop(yard)},
 		};
 		yard_put(yard, value);
+		if(mathfail)
+			return NAN;
 	}
-	struct operand_stack stack = {.len = 0};
+	struct operand_stack stack = {0};
 	for(unsigned i = 0; i < yard->qlen; i++) {
 		struct yard_value v = yard->queue[i];
 		if(v.isnum) {
@@ -198,6 +222,8 @@ long double yard_compute(struct yard *yard) {
 			long double result = op_eval(v.content.op, a, b);
 			operand_push(&stack, result);
 		}
+		if(mathfail)
+			return NAN;
 	}
 	return operand_pop(&stack);
 }
@@ -206,6 +232,7 @@ const char *namestack[NAME_STACK_SIZE];
 unsigned namestack_len = 0;
 
 void namestack_push(const char *name) {
+	mathfail = true;
 	if(namestack_len >= NAME_STACK_SIZE) {
 		report_error("Name stack overflow");
 		return;
@@ -229,25 +256,31 @@ int namestack_contains(const char *name) {
 }
 
 long double calc(const char *expr) {
-	struct yard yard = {.slen = 0, .qlen = 0};
+	mathfail = false;
+	struct yard yard = {0};
 	expr += scan_whitespace(expr);
+	// while there are tokens to be read
 	while(expr[0]) {
+		// if the token is a number
 		if(isdigit(expr[0])) {
-			const char *numstr;
-			expr += scan_name(expr, &numstr);
-			long double num = strtold(numstr, NULL);
-			free((char*) numstr);
+			char *numend;
+			long double num = strtold(expr, &numend);
+			expr = numend;
+			// push it to the output queue
 			yard_add_num(&yard, num);
 		} else if(expr[0] == '.' || expr[0] == '_' || isalpha(expr[0])) {
+			// if the token is a variable, calculate recursively
 			const char *name;
 			expr += scan_name(expr, &name);
 			struct label label;
 			long double result;
 			if(!lookup_label(name, &label)) {
+				mathfail = true;
 				report_error("Unknown identifier: \"%s\"", name);
 				result = NAN;
 			} else if(label.expr) {
 				if(namestack_contains(name)) {
+					mathfail = true;
 					report_error("Recursive label: \"%s\"", name);
 					free((char*) name);
 					return NAN;
@@ -259,13 +292,41 @@ long double calc(const char *expr) {
 				result = label.constant;
 			}
 			free((char*) name);
+			// push it to the output queue
 			yard_add_num(&yard, result);
+		} else if(expr[0] == ')') {
+			// while top operator is not a left parenthesis
+			while(yard_peek(&yard) != '(') {
+				// ...pop operator from stack to output queue
+				struct yard_value value = {
+					.isnum = 0,
+					.content = {.op = yard_pop(&yard)},
+				};
+				yard_put(&yard, value);
+				if(mathfail)
+					return NAN;
+			}
+			// if top operand is a left parenthesis
+			if(yard_peek(&yard) == '(') {
+				yard_pop(&yard); // discard it
+			}
+			expr++;
+			// end of right parenthesis handling
+		} else if(expr[0] == '(') {
+			// if the token is a left parenthesis,
+			//push it onto the operator stack.
+			yard_add_op(&yard, '(');
+			expr++;
 		} else {
+			// if the token is an operator,
+			// push it onto the operator stack.
 			char op = expr[0];
 			expr++;
 			yard_add_op(&yard, op);
 		}
 		expr += scan_whitespace(expr);
+		if(mathfail)
+			return NAN;
 	}
 	return yard_compute(&yard);
 }
