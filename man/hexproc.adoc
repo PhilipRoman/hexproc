@@ -66,10 +66,10 @@ Hexproc input consists of the following tokens:
 	End-of-line comments are created using **+#+** or **//**; Note that
 	comments in form of +#+ _NUMBER_ "_filename_" are recognized as
 	line markers, similar to how the C preprocessor uses them. This way,
-	you can get correct debug information after using *#include*.
+	you can get correct debug information after using *+#include+*.
 
 *labels*::
-	The syntax _NAME_: will assign the current byte offset
+	The syntax *_NAME_:* will assign the current byte offset
 	to the specified name. Labels may freely appear between tokens.
 
 *lazy assignment*::
@@ -141,11 +141,11 @@ The following identifiers may be used as type names:
 == Debugger
 Hexproc comes with a built-in debugger, which you can activate using the *-d* option. The debugger supports the following commands:
 
-*break* _NUMBER_, *brk* _NUMBER_::
+*break* _NUMBER_, *b* _NUMBER_::
 	Creates a breakpoint on given line number. When execution reaches a
 	line with a breakpoint, it will enter the debugger before evaluating the line
 
-*run*, *resume*:: Exits the debugger and resumes execution.
+*resume*, *r*:: Suspends the debugger and resumes execution.
 
 *step*, *s*:: Executes next line and enters debugger again.
 
