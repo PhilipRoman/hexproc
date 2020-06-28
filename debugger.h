@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "label.h"
+#include "calc.h"
 #include "diagnostic.h"
 /* True if debugger has been enabled */
 bool debug_mode = false;
@@ -26,6 +27,7 @@ bool debugger_resume(void) { return false; }
 bool debugger_step(void) { break_on_next = true; return false; }
 bool debugger_vars(void);
 bool debugger_help(void);
+bool debugger_eval(void);
 
 const struct debugger_command {
 	char name[32];
@@ -44,6 +46,8 @@ const struct debugger_command {
 	{"h",      &debugger_help},
 	{"help",   &debugger_help},
 	{"?",      &debugger_help},
+	{"eval",   &debugger_eval},
+	{"e",      &debugger_eval},
 	{{0}, NULL}
 };
 
@@ -120,5 +124,17 @@ bool debugger_help(void) {
 	"    help - show debugger usage help\n"
 	"  See the manual page hexproc(1) for more info\n"
 	);
+	return true;
+}
+
+bool debugger_eval(void) {
+	char expr[64];
+	/* always scanf 1 less character than buffer size */
+	fscanf(stdin, "%63[^\n]", expr);
+	long double result = calc(expr);
+	if((long long)result == result)
+		fprintf(stderr, "= %lld\n", (long long)result);
+	else
+		fprintf(stderr, "= %Lf\n", result);
 	return true;
 }

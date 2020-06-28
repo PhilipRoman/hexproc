@@ -143,5 +143,7 @@ Hexproc comes with a built-in debugger, which you can activate using the `-d` op
 
 *help*, *h*, *?*:: Shows help on how to use the debugger
 
+*eval* _EXPR_, *e* _EXPR_:: Evaluate an expression
+
 == See Also
 xxd(1), cpp(1)
