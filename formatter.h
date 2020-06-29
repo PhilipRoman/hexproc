@@ -11,14 +11,16 @@
 #include "diagnostic.h"
 
 enum datatype {
-	HP_FLOAT, HP_DOUBLE, HP_LONG, HP_INT, HP_SHORT, HP_BYTE
+	HP_INT, HP_FLOAT, HP_DOUBLE
 };
 
 struct formatter {
+	enum datatype datatype : 4;
+	size_t nbytes : 6;
+	enum {
+		ENDIAN_DEFAULT, ENDIAN_BIG, ENDIAN_LITTLE
+	} endian : 2;
 	const char *expr;
-	enum datatype datatype;
-	bool big_endian;
-	size_t nbytes;
 };
 
 struct formatter *formatqueue = NULL;
@@ -46,51 +48,42 @@ void cleanup_formatters(void) {
 	OPTIONAL_FREE(formatqueue);
 }
 
-enum datatype resolve_datatype(const char *name) {
-#define STR_EQ(a, b) (strcmp((a), (b)) == 0)
-	if(STR_EQ(name, "long") || STR_EQ(name, "int64"))
-		return HP_LONG;
-	else if(STR_EQ(name, "int") || STR_EQ(name, "int32"))
-		return HP_INT;
-	else if(STR_EQ(name, "short") || STR_EQ(name, "int16"))
-		return HP_SHORT;
-	else if(STR_EQ(name, "byte") || STR_EQ(name, "char") || STR_EQ(name, "int8"))
-		return HP_BYTE;
-	else if(STR_EQ(name, "float") || STR_EQ(name, "ieee754_single"))
-		return HP_FLOAT;
-	else if(STR_EQ(name, "double") || STR_EQ(name, "ieee754_double"))
-		return HP_DOUBLE;
-	else {
-		report_error("Unknown data type \"%s\"", name);
-		return HP_INT;
-	}
-#undef STR_EQ
+const struct {
+	char name[32];
+	// a dummy formatter without expr or endian
+	struct formatter format;
+} typemap[] = {
+	{"byte", {HP_INT, 1}},
+	{"int8", {HP_INT, 1}},
+	{"char", {HP_INT, 1}},
+
+	{"short", {HP_INT, 2}},
+	{"int16", {HP_INT, 2}},
+
+	{"int", {HP_INT, 4}},
+	{"int32", {HP_INT, 4}},
+
+	{"long", {HP_INT, 8}},
+	{"int64", {HP_INT, 8}},
+
+	{"ieee754_single", {HP_FLOAT, 4}},
+	{"float", {HP_FLOAT, 4}},
+	{"ieee754_double", {HP_DOUBLE, 8}},
+	{"double", {HP_DOUBLE, 8}},
+	{{0}, {0}}
+};
+
+bool resolve_datatype(const char *name, struct formatter *out) {
+	for(unsigned i = 0; typemap[i].name[0]; i++)
+		if(!strcmp(name, typemap[i].name))
+			return (*out = typemap[i].format), true;
+	return false;
 }
 
-size_t datatype_default_size(enum datatype t) {
-	switch(t) {
-		case HP_FLOAT: return 4;
-		case HP_DOUBLE: return 8;
-		case HP_LONG: return 8;
-		case HP_INT: return 4;
-		case HP_SHORT: return 2;
-		case HP_BYTE: return 1;
-		default:
-			report_error("Invalid data type: %d", (int)t);
-			return 0;
-	}
-}
-
-void format_value(long double value, struct formatter fmt, uint8_t *out, size_t *nbytes) {
-	assert(sizeof(float) == 4);
-	assert(sizeof(double) == 8);
-
+void format_value(long double value, struct formatter fmt, uint8_t out[static 8]) {
 	uint64_t v;
 	switch(fmt.datatype) {
-		case HP_LONG:
-		case HP_INT:
-		case HP_SHORT:
-		case HP_BYTE: {
+		case HP_INT: {
 			if(!isfinite(value))
 				report_error("%Lf cannot be converted to an integer", value);
 			if(value > INT64_MAX) {
@@ -117,11 +110,13 @@ void format_value(long double value, struct formatter fmt, uint8_t *out, size_t 
 			break;
 		}
 	}
-	uint8_t bytes[8];
+	uint8_t bytes[fmt.nbytes];
 	// input (big endian) 0x11_22_33_44_55
 	// formatter: "[3,int,LE]"
 	// result: 33 22 11
-	if(fmt.big_endian) {
+	if(fmt.endian == 0)
+		report_error("Internal error: endian not specified in formatter");
+	if(fmt.endian == ENDIAN_BIG) {
 		unsigned shift = fmt.nbytes * 8;
 		for(unsigned i = 0; i < fmt.nbytes; i++) {
 			shift -= 8;
@@ -134,6 +129,5 @@ void format_value(long double value, struct formatter fmt, uint8_t *out, size_t 
 			shift += 8;
 		}
 	}
-	memcpy(out, bytes, 8);
-	*nbytes = fmt.nbytes;
+	memcpy(out, bytes, fmt.nbytes);
 }

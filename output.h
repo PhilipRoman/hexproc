@@ -42,21 +42,20 @@ void insert_formatter_result(FILE *output) {
 	take_next_formatter(&formatter);
 	long double result = calc(formatter.expr);
 	uint8_t buf[8];
-	size_t nbytes;
-	format_value(result, formatter, buf, &nbytes);
-	offset += nbytes;
+	format_value(result, formatter, buf);
+	offset += formatter.nbytes;
 	// write each byte
 	if(output_mode >= OUTPUT_HEX && need_space)
 		fputc(' ', output);
 	begin_color(output);
-	for(size_t i = 0; i < nbytes; i++) {
+	for(size_t i = 0; i < formatter.nbytes; i++) {
 		// print the separator ' ' unless this byte is the first on line
 		if(output_mode >= OUTPUT_HEX)
 			fprintf(output, "%02x", (unsigned int) buf[i]);
 		else
 			fputc(buf[i], output);
 
-		if(output_mode >= OUTPUT_HEX && i != nbytes-1)
+		if(output_mode >= OUTPUT_HEX && i != formatter.nbytes-1)
 			fputc(' ', output);
 	}
 	need_space = true;

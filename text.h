@@ -192,51 +192,59 @@ size_t try_scan_assign(const char *line, const char **key, const char **value, e
 static struct formatter create_formatter(const char *fmt, const char *expr) {
 	if(!fmt || !expr)
 		report_error("Missing formatter or expression");
-	struct formatter result = {
-		.expr = expr,
-		.datatype = HP_INT,
-		.big_endian = true,
-		.nbytes = 0,
-	};
-
-	bool use_default_size = true;
-	bool use_default_endian = true;
-
+	struct formatter blueprint = {0};
+	int custom_size = -1;
+	unsigned endian = 0; // see formatter.h
 	while(fmt[0]) {
 		fmt += scan_whitespace(fmt);
-		const char *attr;
+		const char *attr = NULL;
 		fmt += scan_name(fmt, &attr);
 		if(!attr) {
 			report_error("Expected formatter attribute");
-			return result;
+			return blueprint;
 		}
 		if(isdigit(attr[0])) {
 			// we're parsing a numeric byte width
-			result.nbytes = attr[0] - '0';
-			if(result.nbytes > 8)
-				report_error("Number of bytes (%d) can't be more than 8", (int) result.nbytes);
-			else
-				use_default_size = false;
-		} else if(isalpha(attr[0])) {
-			if(strcmp("LE", attr)==0) {
-				result.big_endian = false; use_default_endian = false;
-			} else if(strcmp("BE", attr)==0) {
-				result.big_endian = true; use_default_endian = false;
-			} else {
-				result.datatype = resolve_datatype(attr);
+			custom_size = attr[0] - '0';
+			if(custom_size > 8) {
+				report_error("Number of bytes (%d) can't be more than 8", (int) custom_size);
+				custom_size = 8;
 			}
+		} else if(isalpha(attr[0])) {
+			if(strcmp("LE", attr)==0)
+				endian = ENDIAN_LITTLE;
+			else if(strcmp("BE", attr)==0)
+				endian = ENDIAN_BIG;
+			else if(!resolve_datatype(attr, &blueprint))
+				report_error("Unknown data type: \"%s\"", attr);
 		}
 		free((char*)attr);
 		fmt += scan_whitespace(fmt);
 		fmt += scan_char(fmt, ',');
 	}
+	struct formatter result = {
+		.expr = expr,
+		.datatype = HP_INT,
+		.nbytes = 1,
+	};
 
-	long double calc(const char *expr);
+	if(blueprint.nbytes /* if blueprint has been set */) {
+		result.nbytes = blueprint.nbytes;
+		result.datatype = blueprint.datatype;
+		result.endian = blueprint.endian;
+	}
 
-	if(use_default_size)
-		result.nbytes = datatype_default_size(result.datatype);
-	if(use_default_endian)
-		result.big_endian = calc("hexproc.endian") != 0;
+	if(endian == 0 && blueprint.endian != 0)
+		endian = blueprint.endian;
+	if(endian == 0) {
+		// pre-declare function to avoid circular dependency
+		long double calc(const char *expr);
+		endian = calc("hexproc.endian") == 0 ? ENDIAN_LITTLE : ENDIAN_BIG;
+	}
+	result.endian = endian;
+
+	if(custom_size >= 0)
+		result.nbytes = custom_size;
 	return result;
 }
 

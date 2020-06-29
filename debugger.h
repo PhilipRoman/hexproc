@@ -29,7 +29,7 @@ bool debugger_vars(void);
 bool debugger_help(void);
 bool debugger_eval(void);
 
-const struct debugger_command {
+const struct {
 	char name[32];
 	debugger_function *func;
 } debugger_commands[] = {
