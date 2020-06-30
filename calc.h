@@ -7,8 +7,14 @@
 #include <stdbool.h>
 
 #include "diagnostic.h"
-#include "text.h"
 #include "label.h"
+#include "largenum.h"
+
+typedef hp_maxfloat_t calc_float_t;
+typedef hp_maxint_t calc_int_t;
+calc_float_t calc(const char *expr);
+
+#include "text.h"
 
 bool mathfail = false;
 
@@ -20,7 +26,7 @@ bool mathfail = false;
 /* Either an operator or a numeric value */
 struct yard_value {
 	union {
-		long double num;
+		calc_float_t num;
 		char op;
 	} content;
 	char isnum;
@@ -35,10 +41,8 @@ struct yard {
 
 struct operand_stack {
 	unsigned len;
-	long double stack[OPERAND_STACK_SIZE];
+	calc_float_t stack[OPERAND_STACK_SIZE];
 };
-
-long double calc(const char *expr);
 
 // IMPLEMENTATION STARTS HERE
 
@@ -71,26 +75,26 @@ bool leftassoc(char op) {
 	}
 }
 
-/* Attempts to convert the long double to an integer,
+/* Attempts to convert the float to an integer,
 	handling the case when it has no such representation */
-long to_integer(long double d) {
+calc_int_t to_integer(calc_float_t d) {
 	if(!isfinite(d)) {
-		report_error("%Lf cannot be converted to an integer", d);
+		report_error("%Lf cannot be converted to an integer", (long double)d);
 		return 0;
 	}
-	return (long)d;
+	return (calc_int_t)d;
 }
 
 /* evaluates the result of two arguments applied to
 	binary operator */
-long double op_eval(char op, long double a, long double b) {
+calc_float_t op_eval(char op, calc_float_t a, calc_float_t b) {
 	switch(op) {
 		case '+': return a + b;
 		case '-': return a - b;
 		case '*': return a * b;
 		case '/': return a / b;
-		case '%': return fmodl(a, b);
-		case '^': return powl(a, b);
+		case '%': return fmodl((long double)a, (long double)b);
+		case '^': return powl((long double)a, (long double)b);
 		case '&': return to_integer(a) & to_integer(b);
 		case '|': return to_integer(a) | to_integer(b);
 		case '~': return to_integer(a) ^ to_integer(b);
@@ -141,7 +145,7 @@ char yard_peek(struct yard *yard) {
 	return yard->stack[yard->slen-1];
 }
 
-void yard_add_num(struct yard *yard, long double x) {
+void yard_add_num(struct yard *yard, calc_float_t x) {
 	struct yard_value value = {
 		.isnum = 1,
 		.content = {.num = x},
@@ -183,7 +187,7 @@ void yard_add_op(struct yard *yard, char op) {
 #undef TOP_IS_NOT_LEFT_PAREN
 }
 
-void operand_push(struct operand_stack *stack, long double x) {
+void operand_push(struct operand_stack *stack, calc_float_t x) {
 	if(stack->len >= OPERAND_STACK_SIZE) {
 		mathfail = true;
 		report_error("Operand stack overflow");
@@ -192,7 +196,7 @@ void operand_push(struct operand_stack *stack, long double x) {
 	stack->stack[stack->len++] = x;
 }
 
-long double operand_pop(struct operand_stack *stack) {
+calc_float_t operand_pop(struct operand_stack *stack) {
 	if(!stack->len) {
 		report_error("Operand stack underflow");
 		return NAN;
@@ -200,7 +204,7 @@ long double operand_pop(struct operand_stack *stack) {
 	return stack->stack[--stack->len];
 }
 
-long double yard_compute(struct yard *yard) {
+calc_float_t yard_compute(struct yard *yard) {
 	/* pop remaining operators into output queue */
 	while(yard->slen) {
 		struct yard_value value = {
@@ -217,9 +221,9 @@ long double yard_compute(struct yard *yard) {
 		if(v.isnum) {
 			operand_push(&stack, v.content.num);
 		} else {
-			long double b = operand_pop(&stack);
-			long double a = operand_pop(&stack);
-			long double result = op_eval(v.content.op, a, b);
+			calc_float_t b = operand_pop(&stack);
+			calc_float_t a = operand_pop(&stack);
+			calc_float_t result = op_eval(v.content.op, a, b);
 			operand_push(&stack, result);
 		}
 		if(mathfail)
@@ -255,7 +259,7 @@ int namestack_contains(const char *name) {
 	return 0;
 }
 
-long double calc(const char *expr) {
+calc_float_t calc(const char *expr) {
 	mathfail = false;
 	struct yard yard = {0};
 	expr += scan_whitespace(expr);
@@ -264,7 +268,7 @@ long double calc(const char *expr) {
 		// if the token is a number
 		if(isdigit(expr[0])) {
 			char *numend;
-			long double num = strtold(expr, &numend);
+			calc_float_t num = strtold(expr, &numend);
 			expr = numend;
 			// push it to the output queue
 			yard_add_num(&yard, num);
@@ -273,7 +277,7 @@ long double calc(const char *expr) {
 			const char *name;
 			expr += scan_name(expr, &name);
 			struct label label;
-			long double result;
+			calc_float_t result;
 			if(!lookup_label(name, &label)) {
 				mathfail = true;
 				report_error("Unknown identifier: \"%s\"", name);

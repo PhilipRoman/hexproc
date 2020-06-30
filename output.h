@@ -40,7 +40,7 @@ void insert_formatter_result(FILE *output) {
 	// take next delayed expression from queue
 	struct formatter formatter;
 	take_next_formatter(&formatter);
-	long double result = calc(formatter.expr);
+	calc_float_t result = calc(formatter.expr);
 	uint8_t buf[8];
 	format_value(result, formatter, buf);
 	offset += formatter.nbytes;

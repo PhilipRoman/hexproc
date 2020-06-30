@@ -49,10 +49,13 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				goto start;
 			}
 			case '[': {
-				struct formatter formatter;
-				line += scan_formatter(line, &formatter);
+				const char *fmt, *expr;
+				line += scan_formatter(line, &fmt, &expr);
 				if(textfail)
 					goto end_loop;
+				struct formatter formatter = create_formatter(fmt, expr);
+				// don't need to free expr because it is kept in formatter
+				free((char*)fmt);
 				add_formatter(formatter);
 				add_sourcemap_entry(offset, SOURCE_FORMATTER);
 				offset += formatter.nbytes;

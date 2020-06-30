@@ -9,6 +9,8 @@
 #include <math.h>
 
 #include "diagnostic.h"
+#include "calc.h"
+#include "text.h"
 
 enum datatype {
 	HP_INT, HP_FLOAT, HP_DOUBLE
@@ -78,6 +80,62 @@ bool resolve_datatype(const char *name, struct formatter *out) {
 		if(!strcmp(name, typemap[i].name))
 			return (*out = typemap[i].format), true;
 	return false;
+}
+
+static struct formatter create_formatter(const char *fmt, const char *expr) {
+	if(!fmt || !expr)
+		report_error("Missing formatter or expression");
+	struct formatter blueprint = {0};
+	int custom_size = -1;
+	unsigned endian = 0; // see formatter.h
+	while(fmt[0]) {
+		fmt += scan_whitespace(fmt);
+		const char *attr = NULL;
+		fmt += scan_name(fmt, &attr);
+		if(!attr) {
+			report_error("Expected formatter attribute");
+			return blueprint;
+		}
+		if(isdigit(attr[0])) {
+			// we're parsing a numeric byte width
+			custom_size = attr[0] - '0';
+			if(custom_size > 8) {
+				report_error("Number of bytes (%d) can't be more than 8", (int) custom_size);
+				custom_size = 8;
+			}
+		} else if(isalpha(attr[0])) {
+			if(strcmp("LE", attr)==0)
+				endian = ENDIAN_LITTLE;
+			else if(strcmp("BE", attr)==0)
+				endian = ENDIAN_BIG;
+			else if(!resolve_datatype(attr, &blueprint))
+				report_error("Unknown data type: \"%s\"", attr);
+		}
+		free((char*)attr);
+		fmt += scan_whitespace(fmt);
+		fmt += scan_char(fmt, ',');
+	}
+	struct formatter result = {
+		.expr = expr,
+		.datatype = HP_INT,
+		.nbytes = 1,
+	};
+
+	if(blueprint.nbytes /* if blueprint has been set */) {
+		result.nbytes = blueprint.nbytes;
+		result.datatype = blueprint.datatype;
+		result.endian = blueprint.endian;
+	}
+
+	if(endian == 0 && blueprint.endian != 0)
+		endian = blueprint.endian;
+	if(endian == 0)
+		endian = calc("hexproc.endian") == 0 ? ENDIAN_LITTLE : ENDIAN_BIG;
+	result.endian = endian;
+
+	if(custom_size >= 0)
+		result.nbytes = custom_size;
+	return result;
 }
 
 void format_value(long double value, struct formatter fmt, uint8_t out[static 8]) {

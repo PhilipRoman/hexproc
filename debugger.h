@@ -131,10 +131,10 @@ bool debugger_eval(void) {
 	char expr[64];
 	/* always scanf 1 less character than buffer size */
 	fscanf(stdin, "%63[^\n]", expr);
-	long double result = calc(expr);
+	calc_float_t result = calc(expr);
 	if((long long)result == result)
 		fprintf(stderr, "= %lld\n", (long long)result);
 	else
-		fprintf(stderr, "= %Lf\n", result);
+		fprintf(stderr, "= %Lf\n", (long double)result);
 	return true;
 }

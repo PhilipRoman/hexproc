@@ -189,66 +189,7 @@ size_t try_scan_assign(const char *line, const char **key, const char **value, e
 	}
 }
 
-static struct formatter create_formatter(const char *fmt, const char *expr) {
-	if(!fmt || !expr)
-		report_error("Missing formatter or expression");
-	struct formatter blueprint = {0};
-	int custom_size = -1;
-	unsigned endian = 0; // see formatter.h
-	while(fmt[0]) {
-		fmt += scan_whitespace(fmt);
-		const char *attr = NULL;
-		fmt += scan_name(fmt, &attr);
-		if(!attr) {
-			report_error("Expected formatter attribute");
-			return blueprint;
-		}
-		if(isdigit(attr[0])) {
-			// we're parsing a numeric byte width
-			custom_size = attr[0] - '0';
-			if(custom_size > 8) {
-				report_error("Number of bytes (%d) can't be more than 8", (int) custom_size);
-				custom_size = 8;
-			}
-		} else if(isalpha(attr[0])) {
-			if(strcmp("LE", attr)==0)
-				endian = ENDIAN_LITTLE;
-			else if(strcmp("BE", attr)==0)
-				endian = ENDIAN_BIG;
-			else if(!resolve_datatype(attr, &blueprint))
-				report_error("Unknown data type: \"%s\"", attr);
-		}
-		free((char*)attr);
-		fmt += scan_whitespace(fmt);
-		fmt += scan_char(fmt, ',');
-	}
-	struct formatter result = {
-		.expr = expr,
-		.datatype = HP_INT,
-		.nbytes = 1,
-	};
-
-	if(blueprint.nbytes /* if blueprint has been set */) {
-		result.nbytes = blueprint.nbytes;
-		result.datatype = blueprint.datatype;
-		result.endian = blueprint.endian;
-	}
-
-	if(endian == 0 && blueprint.endian != 0)
-		endian = blueprint.endian;
-	if(endian == 0) {
-		// pre-declare function to avoid circular dependency
-		long double calc(const char *expr);
-		endian = calc("hexproc.endian") == 0 ? ENDIAN_LITTLE : ENDIAN_BIG;
-	}
-	result.endian = endian;
-
-	if(custom_size >= 0)
-		result.nbytes = custom_size;
-	return result;
-}
-
-size_t scan_formatter(const char *string, struct formatter *out) {
+size_t scan_formatter(const char *string, /* output: */ const char **out_fmt, const char **out_expr) {
 	const char *initial_string = string;
 
 	const char *fmt = NULL;
@@ -265,9 +206,10 @@ size_t scan_formatter(const char *string, struct formatter *out) {
 	else
 		string += scan_name(string, &expr);
 
-	if(!textfail)
-		*out = create_formatter(fmt, expr);
+	if(!textfail) {
+		*out_fmt = fmt;
+		*out_expr = expr;
+	}
 
-	free((char*) fmt);
 	return string - initial_string;
 }
