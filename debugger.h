@@ -64,7 +64,7 @@ bool run_debug_command(void) {
 	return true;
 }
 
-void enter_debugger() {
+void enter_debugger(void) {
 	fprintf(stderr, "  Entered debug mode before line %"PRIu64"\n", line_number);
 	do {
 		fprintf(stderr, "DEBUGGER %s:%"PRIu64"> ", current_file_name, line_number);

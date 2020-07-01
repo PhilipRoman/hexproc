@@ -10,8 +10,6 @@
 #include "label.h"
 #include "largenum.h"
 
-typedef hp_maxfloat_t calc_float_t;
-typedef hp_maxint_t calc_int_t;
 calc_float_t calc(const char *expr);
 
 #include "text.h"
@@ -82,6 +80,10 @@ calc_int_t to_integer(calc_float_t d) {
 		report_error("%Lf cannot be converted to an integer", (long double)d);
 		return 0;
 	}
+	if(d > CALC_INT_MAX)
+		return CALC_INT_MAX;
+	if(d < CALC_INT_MIN)
+		return CALC_INT_MIN;
 	return (calc_int_t)d;
 }
 
@@ -162,7 +164,6 @@ void yard_add_op(struct yard *yard, char op) {
 
 #define EQUAL_BUT_TOP_IS_LEFT_ASSOC \
 	(prec(yard_peek(yard))==prec(op) && leftassoc(yard_peek(yard)))
-
 #define TOP_IS_NOT_LEFT_PAREN (yard_peek(yard) != '(')
 
 	while(

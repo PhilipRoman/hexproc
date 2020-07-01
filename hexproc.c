@@ -1,17 +1,25 @@
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef _POSIX_C_SOURCE
 #include <unistd.h>
 #elif defined(_WIN32)
 #include <io.h>
+// Since Windows is a special snowflake,
+// here is a quick fix to get strtold to recognize hex numbers.
+// Keep in mind that <stdlib.h> has to be included before this line
+#define strtold(...) strtod(__VA_ARGS__)
+#define __USE_MINGW_ANSI_STDIO 1
+#include <stdio.h>
 #else
+#include <stdio.h>
 int isatty(int);
 int fileno(FILE*);
 #endif
+
+#include <stdio.h>
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
 
 #include "getline.h"
 #include "getopt.h"

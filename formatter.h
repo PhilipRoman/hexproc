@@ -138,12 +138,12 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 	return result;
 }
 
-void format_value(long double value, struct formatter fmt, uint8_t out[static 8]) {
+void format_value(calc_float_t value, struct formatter fmt, uint8_t out[static 8]) {
 	uint64_t v;
 	switch(fmt.datatype) {
 		case HP_INT: {
 			if(!isfinite(value))
-				report_error("%Lf cannot be converted to an integer", value);
+				report_error("%Lf cannot be converted to an integer", (long double)value);
 			if(value > INT64_MAX) {
 				// also includes positive infinity
 				v = UINT64_MAX;
