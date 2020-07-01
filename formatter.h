@@ -98,10 +98,13 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		}
 		if(isdigit(attr[0])) {
 			// we're parsing a numeric byte width
-			custom_size = attr[0] - '0';
-			if(custom_size > 8) {
-				report_error("Number of bytes (%d) can't be more than 8", (int) custom_size);
-				custom_size = 8;
+			char *numend;
+			custom_size = strtol(attr, &numend, 0);
+			if(strlen(attr) != numend-attr)
+				report_error("Ignoring trailing characters in formatter size");
+			if(custom_size > sizeof(calc_int_t)) {
+				report_error("Number of bytes (%d) can't be more than %d", (int) custom_size, (int)sizeof(calc_int_t));
+				custom_size = sizeof(calc_int_t);
 			}
 		} else if(isalpha(attr[0])) {
 			if(strcmp("LE", attr)==0)
@@ -138,23 +141,11 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 	return result;
 }
 
-void format_value(calc_float_t value, struct formatter fmt, uint8_t out[static 8]) {
-	uint64_t v;
+void format_value(calc_float_t value, struct formatter fmt, uint8_t *out /* must have space for at least 'fmt.nbytes' bytes */) {
+	calc_int_t v;
 	switch(fmt.datatype) {
 		case HP_INT: {
-			if(!isfinite(value))
-				report_error("%Lf cannot be converted to an integer", (long double)value);
-			if(value > INT64_MAX) {
-				// also includes positive infinity
-				v = UINT64_MAX;
-			} else if(isinf(value) < 0) {
-				// negative infinity
-				v = 0;
-			} else if(isnan(value)) {
-				v = 0;
-			} else {
-				v = (uint64_t) value;
-			}
+			v = to_integer(value);
 			break;
 		}
 		case HP_FLOAT: {
@@ -168,10 +159,10 @@ void format_value(calc_float_t value, struct formatter fmt, uint8_t out[static 8
 			break;
 		}
 	}
-	uint8_t bytes[fmt.nbytes];
 	// input (big endian) 0x11_22_33_44_55
 	// formatter: "[3,int,LE]"
 	// result: 33 22 11
+	uint8_t bytes[fmt.nbytes];
 	if(fmt.endian == 0)
 		report_error("Internal error: endian not specified in formatter");
 	if(fmt.endian == ENDIAN_BIG) {

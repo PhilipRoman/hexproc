@@ -41,7 +41,7 @@ void insert_formatter_result(FILE *output) {
 	struct formatter formatter;
 	take_next_formatter(&formatter);
 	calc_float_t result = calc(formatter.expr);
-	uint8_t buf[8];
+	uint8_t buf[sizeof(calc_int_t)];
 	format_value(result, formatter, buf);
 	offset += formatter.nbytes;
 	// write each byte
