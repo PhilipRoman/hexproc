@@ -15,8 +15,11 @@
 
 #if defined(__SIZEOF_FLOAT128__) && !defined(_WIN32)
 #	define HAVE_HP_FLOAT128
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wpedantic"
 	typedef __float128 hp_float128_t;
 	typedef __float128 calc_float_t;
+#	pragma GCC diagnostic pop
 #elif defined(LDBL_MAX) && defined(LDBL_MIN) && !defined(_WIN32)
 	typedef long double calc_float_t;
 #elif defined(DBL_MAX) && defined(DBL_MIN)
@@ -31,11 +34,20 @@
 
 #ifdef __SIZEOF_INT128__
 #	define HAVE_HP_INT128
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wpedantic"
+	// this redundant typedef helps us suppress warnings
+	// because #pragma doesn't apply to text from macro expansion
+	// don't use it anywhere else
+	typedef __int128 safe_int128;
+	// same, but this typedef is only used to avoid UB when shifting
+	typedef unsigned __int128 safe_uint128;
+#	pragma GCC diagnostic pop
 // if we have int128, we probably have int64_t in stdint.h
-#	define CALC_INT_MAX (( (__int128)INT64_MAX << 63) | UINT64_MAX)
-#	define CALC_INT_MIN (-(__int128)INT64_MAX << 63)
-	typedef __int128 hp_int128_t;
-	typedef __int128 calc_int_t;
+#	define CALC_INT_MAX (( (safe_int128)INT64_MAX << 63) | UINT64_MAX)
+#	define CALC_INT_MIN ( (safe_uint128)(-(safe_int128)INT64_MAX) << 63)
+	typedef safe_int128 hp_int128_t;
+	typedef safe_int128 calc_int_t;
 #else
 #	define CALC_INT_MAX INTMAX_MAX
 #	define CALC_INT_MIN INTMAX_MIN
