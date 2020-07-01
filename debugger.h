@@ -118,10 +118,12 @@ void cleanup_breakpoints(void) {
 bool debugger_help(void) {
 	fprintf(stderr,
 	"  Available commands:\n"
-	"    break NUMBER - set a breakpoint before given line number\n"
-	"    resume - resume execution\n"
-	"    vars - list current variables\n"
-	"    help - show debugger usage help\n"
+	"    b, break NUMBER - set a breakpoint before given line number\n"
+	"    r, resume - resume execution\n"
+	"    v, vars - list current variables\n"
+	"    l, list - list current variables\n"
+	"    h, help - show debugger usage help\n"
+	"    e, eval - evaluate an expression\n"
 	"  See the manual page hexproc(1) for more info\n"
 	);
 	return true;
