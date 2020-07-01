@@ -57,7 +57,7 @@ build/linux/%.o: %.c $(HFILES)
 windows: build/windows/hexproc.exe
 build/windows/hexproc.exe: build/windows/hexproc.o
 	@mkdir -p build/windows
-	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
+	$(WINDOWS_CC) $(CFLAGS) -DHEXPROC_COMPILER="$(WINDOWS_CC)" $(RELEASE_FLAGS) -o $@ $^ -lm
 
 build/windows/%.o: %.c $(HFILES)
 	@mkdir -p build/windows

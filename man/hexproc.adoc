@@ -16,6 +16,9 @@ hexproc - hexadecimal preprocessor for building binary files or hexdumps
 *-v*::
 	Prints the program version and exits
 
+*-V*::
+	Prints advanced program configuration and exits
+
 *-h*::
 	Prints a brief help message and exits
 

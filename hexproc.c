@@ -49,6 +49,7 @@ static void print_usage(void) {
 	fprintf(stderr,
 "Usage: hexproc [OPTION...] [FILE]\n"
 "  -v          Print program version and exit\n"
+"  -V          Print program version and configuration and exit\n"
 "  -h          Print this help message and exit\n"
 "  -b          Output binary data\n"
 "  -B          Force output binary data (even when output is a TTY)\n"
@@ -60,8 +61,49 @@ static void print_usage(void) {
 }
 
 static void print_version(void) {
-	printf("Hexproc %s [%s, %s]\n",
-		HEXPROC_VERSION, HEXPROC_DATE, HEXPROC_COMPILER);
+	printf("Hexproc %s\n", HEXPROC_VERSION);
+}
+
+static void print_configuration(void) {
+#	ifdef HAVE_HP_FLOAT80
+	#define HAVE_HP_FLOAT80_YESNO "yes"
+#else
+	#define HAVE_HP_FLOAT80_YESNO "no"
+#endif
+#	ifdef HAVE_HP_FLOAT128
+	#define HAVE_HP_FLOAT128_YESNO "yes"
+#else
+	#define HAVE_HP_FLOAT128_YESNO "no"
+#endif
+#	ifdef HAVE_HP_INT128
+	#define HAVE_HP_INT128_YESNO "yes"
+#else
+	#define HAVE_HP_INT128_YESNO "no"
+#endif
+	printf(
+	"Version:         " HEXPROC_VERSION "\n"
+	"Build timestamp: " HEXPROC_DATE "\n"
+	"Compiler:        " HEXPROC_COMPILER "\n"
+	"Have float80?  " HAVE_HP_FLOAT80_YESNO "\n"
+	"Have float128? " HAVE_HP_FLOAT128_YESNO "\n"
+	"Have int128?   " HAVE_HP_INT128_YESNO "\n"
+	"Float expression type: " CALC_FLOAT_TYPENAME "\n"
+	"Int expression type:   " CALC_INT_TYPENAME "\n"
+	"Max expression call stack depth: %d\n"
+	"Max number of expression tokens: %d\n"
+	"=== Internal structure information ===\n"
+	"Sizeof struct formatter: %d\n"
+	"Sizeof struct label: %d\n"
+	"Sizeof struct sourcemap: %d\n",
+	(int)NAME_STACK_SIZE,
+	(int)YARD_QUEUE_SIZE,
+	(int)sizeof(struct formatter),
+	(int)sizeof(struct label),
+	(int)sizeof(struct sourcemap_entry)
+	);
+#undef HAVE_HP_FLOAT80_YESNO
+#undef HAVE_HP_FLOAT128_YESNO
+#undef HAVE_HP_INT128_YESNO
 }
 
 // special variables
@@ -90,13 +132,16 @@ int main(int argc, char **argv) {
 
 	opterr = 0; // disable 'getopt' error message
 	int opt;
-	while((opt = getopt(argc, argv, "vhbBdcC")) != -1) {
+	while((opt = getopt(argc, argv, "vVhbBdcC")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage();
 				return 0;
 			case 'v':
 				print_version();
+				return 0;
+			case 'V':
+				print_configuration();
 				return 0;
 			case 'B':
 				force_binary = true;

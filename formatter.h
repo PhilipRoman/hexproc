@@ -12,16 +12,14 @@
 #include "calc.h"
 #include "text.h"
 
-enum datatype {
-	HP_INT, HP_FLOAT, HP_DOUBLE
-};
-
 struct formatter {
-	enum datatype datatype : 4;
-	size_t nbytes : 6;
+	enum {
+		HP_UNAVAILABLE, HP_INT, HP_FLOAT, HP_DOUBLE
+	} datatype : 4;
+	unsigned nbytes : 8;
 	enum {
 		ENDIAN_DEFAULT, ENDIAN_BIG, ENDIAN_LITTLE
-	} endian : 2;
+	} endian : 4;
 	const char *expr;
 };
 
@@ -72,6 +70,9 @@ const struct {
 	{"float", {HP_FLOAT, 4}},
 	{"ieee754_double", {HP_DOUBLE, 8}},
 	{"double", {HP_DOUBLE, 8}},
+#ifdef HAVE_HP_FLOAT80
+
+#endif
 	{{0}, {0}}
 };
 

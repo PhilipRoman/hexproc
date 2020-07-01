@@ -12,7 +12,7 @@ struct sourcemap_entry {
 		SOURCE_FORMATTER,
 		SOURCE_NEWLINE,
 		SOURCE_END /* marks the end of a token */
-	} action;
+	} action : 4;
 } *sourcemap;
 
 size_t sourcemap_pos, sourcemap_len, sourcemap_cap;

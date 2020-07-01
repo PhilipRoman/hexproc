@@ -5,6 +5,7 @@
 
 #include "diagnostic.h"
 #include "hash.h"
+#include "largenum.h"
 
 /**
  * This header implements a mapping from names to expressions
