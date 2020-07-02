@@ -3,8 +3,8 @@ man/*.html
 man/*.1
 
 # generated example files
-example/**.class
-example/**.o
+example/java/*.class
+example/elf/*.o
 
 # generated executables
 build/

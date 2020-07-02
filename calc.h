@@ -25,7 +25,7 @@ bool mathfail = false;
 struct yard_value {
 	union {
 		calc_float_t num;
-		char op;
+		int op;
 	} content;
 	char isnum;
 };
@@ -33,7 +33,7 @@ struct yard_value {
 struct yard {
 	unsigned slen; // stack length
 	unsigned qlen; // queue length
-	char stack[YARD_STACK_SIZE];
+	short stack[YARD_STACK_SIZE];
 	struct yard_value queue[YARD_QUEUE_SIZE];
 };
 
@@ -44,14 +44,29 @@ struct operand_stack {
 
 // IMPLEMENTATION STARTS HERE
 
+#define OP_CODE(char1, char2) (( (unsigned char)(char1) << 8 ) | char2)
+
 /* The precedence of given operator */
-int prec(char op) {
+int prec(int op) {
 	switch(op) {
 		case '&':
 		case '|':
-		case '~': return 50;
+		case '~':
+			return 50;
+		case OP_CODE('!', '='):
+		case OP_CODE('=', '='):
+			return 60;
+		case '>':
+		case '<':
+		case OP_CODE('>', '='):
+		case OP_CODE('<', '='):
+			return 70;
+		case OP_CODE('>', '>'):
+		case OP_CODE('<', '<'):
+			return 80;
 		case '+':
-		case '-': return 100;
+		case '-':
+			return 100;
 		case '*':
 		case '/':
 		case '%': return 200;
@@ -66,12 +81,7 @@ int prec(char op) {
 }
 
 /* Returns true if the operator is left-associative */
-bool leftassoc(char op) {
-	switch(op) {
-		case '^': return 0;
-		default: return 1;
-	}
-}
+#define leftassoc(op) ((bool)(op == '^'))
 
 /* Attempts to convert the float to an integer,
 	handling the case when it has no such representation */
@@ -89,7 +99,7 @@ calc_int_t to_integer(calc_float_t d) {
 
 /* evaluates the result of two arguments applied to
 	binary operator */
-calc_float_t op_eval(char op, calc_float_t a, calc_float_t b) {
+calc_float_t op_eval(int op, calc_float_t a, calc_float_t b) {
 	switch(op) {
 		case '+': return a + b;
 		case '-': return a - b;
@@ -97,9 +107,19 @@ calc_float_t op_eval(char op, calc_float_t a, calc_float_t b) {
 		case '/': return a / b;
 		case '%': return fmodl((long double)a, (long double)b);
 		case '^': return powl((long double)a, (long double)b);
+		// bitwise, integer-only ops
 		case '&': return to_integer(a) & to_integer(b);
 		case '|': return to_integer(a) | to_integer(b);
 		case '~': return to_integer(a) ^ to_integer(b);
+		case OP_CODE('>', '>'): return to_integer(a) >> to_integer(b);
+		case OP_CODE('<', '<'): return to_integer(a) << to_integer(b);
+		// comparisons
+		case OP_CODE('!', '='): return a != b;
+		case OP_CODE('=', '='): return a == b;
+		case OP_CODE('>', '='): return a >= b;
+		case OP_CODE('<', '='): return a <= b;
+		case '<': return a < b;
+		case '>': return a > b;
 		default: {
 			mathfail = true;
 			report_error("Bad operator ((char)%d = '%c')",
@@ -120,7 +140,7 @@ void yard_put(struct yard *yard, struct yard_value v) {
 }
 
 /* puts the value on top of stack */
-void yard_push(struct yard *yard, char op) {
+void yard_push(struct yard *yard, int op) {
 	if(yard->slen >= YARD_STACK_SIZE) {
 		mathfail = true;
 		report_error("Shunting yard stack overflow");
@@ -130,7 +150,7 @@ void yard_push(struct yard *yard, char op) {
 }
 
 /* returns and removes the operator at the top of stack */
-char yard_pop(struct yard *yard) {
+int yard_pop(struct yard *yard) {
 	if(!yard->slen) {
 		mathfail = true;
 		report_error("Shunting yard stack underflow");
@@ -140,7 +160,7 @@ char yard_pop(struct yard *yard) {
 }
 
 /* returns the operator at the top of stack */
-char yard_peek(struct yard *yard) {
+int yard_peek(struct yard *yard) {
 	if(!yard->slen) {
 		return '?';
 	}
@@ -156,7 +176,7 @@ void yard_add_num(struct yard *yard, calc_float_t x) {
 }
 /* https://en.wikipedia.org/wiki/Shunting-yard_algorithm */
 
-void yard_add_op(struct yard *yard, char op) {
+void yard_add_op(struct yard *yard, int op) {
 
 #define STACK_NOT_EMPTY (yard->slen)
 
@@ -322,12 +342,19 @@ calc_float_t calc(const char *expr) {
 			//push it onto the operator stack.
 			yard_add_op(&yard, '(');
 			expr++;
-		} else {
+		} else if(ispunct(expr[0])) {
 			// if the token is an operator,
 			// push it onto the operator stack.
-			char op = expr[0];
+			int op = expr[0];
+			if(ispunct(expr[1])) {
+				// we have a two-char operator
+				op = OP_CODE(expr[0], expr[1]);
+				expr++;
+			}
 			expr++;
 			yard_add_op(&yard, op);
+		} else {
+			report_error("Unknown character (char)%d = '%c'", (int)expr[0], (char)expr[0]);
 		}
 		expr += scan_whitespace(expr);
 		if(mathfail)
