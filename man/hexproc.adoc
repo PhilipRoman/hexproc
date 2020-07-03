@@ -70,9 +70,11 @@ Hexproc input consists of the following tokens:
 	comments in form of +#+ _NUMBER_ "_filename_" are recognized as
 	line markers, similar to how the C preprocessor uses them. This way,
 	you can get correct debug information after using *+#include+*.
+	Block comments start with **/+*+** and end with **+*+/**. They
+	cannot be nested.
 
 *labels*::
-	The syntax *_NAME_:* will assign the current byte offset
+	The syntax _NAME_ *+:+* will assign the current byte offset
 	to the specified name. Labels may freely appear between tokens.
 
 *lazy assignment*::

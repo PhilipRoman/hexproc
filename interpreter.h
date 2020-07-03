@@ -17,6 +17,8 @@ struct bytequeue buffer;
 /* The current byte offset */
 uint64_t offset = 0;
 
+bool block_comment = false;
+
 /* Runs first-pass processing on the given line and
 	writes intermediate results to the buffer file. */
 void process_line(const char *line, struct bytequeue *buffer) {
@@ -28,10 +30,16 @@ void process_line(const char *line, struct bytequeue *buffer) {
 	line += scan_whitespace(line);
 	while(line[0]) {
 		textfail = false;
+		if(block_comment)
+			while(line[1] && line[0] != '*')
+				line++;
 		switch(line[0]) {
 			case '/': {
-				if((++line)[0] == '/')
+				++line;
+				if(line[0] == '/')
 					goto end_loop;
+				else if(line[0] == '*')
+					block_comment = true;
 				break;
 			}
 			case '#': {
@@ -43,6 +51,12 @@ void process_line(const char *line, struct bytequeue *buffer) {
 					line_number = linenum - 1;
 				}
 				goto end_loop;
+			}
+			case '*': {
+				++line;
+				if(line[0] == '/')
+					block_comment = false;
+				break;
 			}
 			case ';': {
 				line++;
