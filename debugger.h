@@ -1,7 +1,9 @@
 #pragma once
 
-#include <stdbool.h>
+#include <errno.h>
 #include <inttypes.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "label.h"
@@ -10,8 +12,7 @@
 /* True if debugger has been enabled */
 bool debug_mode = false;
 /* True if the debugger should be entered on next line */
-bool break_on_next = false;
-
+volatile bool break_on_next = false;
 // in practice there are only a few breakpoints, so linear searching is okay
 /* Array of breakpoints */
 uint64_t *breaklist = NULL;
@@ -64,11 +65,22 @@ bool run_debug_command(void) {
 	return true;
 }
 
-void enter_debugger(void) {
-	fprintf(stderr, "  Entered debug mode before line %"PRIu64"\n", line_number);
+/* signature of this method should be compatible with 'signal' api */
+void enter_debugger_async(int unused) {
+	break_on_next = true;
+}
+void enter_debugger() {
+	if(signal(SIGINT, SIG_DFL) == SIG_ERR)
+		fprintf(stderr, "Internal error: could not setup signal handler for SIGINT, errno = %d\n", errno);
+
 	do {
-		fprintf(stderr, "DEBUGGER %s:%"PRIu64"> ", current_file_name, line_number);
+		fprintf(stderr, "\033[31m" "debug %s:%"PRIu64"> " "\033[92m", current_file_name, line_number);
 	} while(run_debug_command());
+
+	if(signal(SIGINT, enter_debugger_async) == SIG_ERR)
+		fprintf(stderr, "Internal error: could not setup signal handler for SIGINT, errno = %d\n", errno);
+	if(isatty(fileno(stderr)))
+		fprintf(stderr, "\033[0m"); // reset terminal color
 }
 
 // implementations of debugger commands

@@ -16,9 +16,10 @@ int isatty(int);
 int fileno(FILE*);
 #endif
 
-#include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "getline.h"
@@ -126,6 +127,13 @@ static void add_builtin_variables(void) {
 	set_constant_label(strdup("hexproc.patch"), patch);
 }
 
+void reset_terminal(void) {
+	if(isatty(fileno(stdout)))
+		fprintf(stdout, "\033[0m");
+	if(isatty(fileno(stderr)))
+		fprintf(stderr, "\033[0m");
+}
+
 int main(int argc, char **argv) {
 	bool force_binary = false;
 	bool force_color = false;
@@ -177,6 +185,9 @@ int main(int argc, char **argv) {
 		// not a fatal error, no need to exit
 	}
 
+	if(debug_mode)
+		atexit(reset_terminal);
+
 	if(optind >= argc) {
 		// no file argument given
 		current_input = stdin;
@@ -207,11 +218,16 @@ int main(int argc, char **argv) {
 	add_builtin_variables();
 
 	if(debug_mode && isatty(fileno(stdin)))
+		if(signal(SIGINT, enter_debugger_async) == SIG_ERR)
+			fprintf(stderr, "Internal error: could not setup signal handler for SIGINT, errno = %d\n", errno);
+
+	if(debug_mode && isatty(fileno(stdin)))
 		enter_debugger();
 
 	struct bytequeue buffer = make_bytequeue();
 
-	while((nread = getline(&line, &len, current_input)) != -1) {
+	while((nread = getline(&line, &len, current_input)) != -1 || !feof(current_input)) {
+		clearerr(current_input);
 		line_number++;
 		process_line(line, &buffer);
 	}
