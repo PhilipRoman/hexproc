@@ -45,7 +45,7 @@ ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
 
 	if (*lineptr == NULL) {
 		*n = 128; /* init len */
-		if ((*lineptr = (char *)malloc(*n)) == NULL) {
+		if ((*lineptr = malloc(*n)) == NULL) {
 			errno = ENOMEM;
 			return -1;
 		}
@@ -72,7 +72,7 @@ ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream) {
 			}
 			new_lineptr_len = *n * 2;
 
-			if ((new_lineptr = (char *)realloc(*lineptr, new_lineptr_len)) == NULL) {
+			if ((new_lineptr = realloc(*lineptr, new_lineptr_len)) == NULL) {
 				errno = ENOMEM;
 				return -1;
 			}
