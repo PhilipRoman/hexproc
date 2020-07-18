@@ -1,3 +1,7 @@
+#ifdef __TINYC__
+void * __dso_handle __attribute((visibility("hidden"))) = &__dso_handle;
+#endif
+
 #include <stdlib.h>
 
 #ifdef _POSIX_C_SOURCE
