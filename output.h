@@ -16,11 +16,10 @@ enum {
 
 const char HEX_DIGITS[] = "0123456789abcdef";
 
+static int color_index = 0;
 void begin_color(FILE *file) {
 	if(output_mode == OUTPUT_HEX_COLOR) {
-		const int colors[] = {41, 42, 44, 45, 46};
-		static int color_index = 0;
-
+		const int colors[] = {46, 45, 42, 44, 41};
 		fprintf(file, "\033[%dm", colors[color_index++]);
 // maybe use underline to denote tokens?
 //		fprintf(file, "\033[04m");
@@ -74,6 +73,8 @@ void consume_sourcemap_actions(FILE *output) {
 				if(output_mode >= OUTPUT_HEX)
 					fputc('\n', output);
 				need_space = false;
+				if(output_mode == OUTPUT_HEX_COLOR)
+					color_index = 0;
 				break;
 			case SOURCE_END:
 				end_color(output);
