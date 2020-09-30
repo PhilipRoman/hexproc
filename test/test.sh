@@ -41,6 +41,7 @@ expect '[int,LE](3 * 4 - 1)' '0b 00 00 00'
 expect '[3,  int]3' '00 00 03'
 expect '[int](3 * (1 + 2))' '00 00 00 09'
 expect '[byte](2^3+1) [byte](0-2^4)' '09 f0'
+expect '[3](~0) [1](1~-1)' 'ff ff ff fe'
 
 echo 'Testing variables'
 expect 'cc cc cc a: [byte]a' 'cc cc cc 03'

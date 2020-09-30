@@ -49,6 +49,7 @@ const struct {
 	{"?",      &debugger_help},
 	{"eval",   &debugger_eval},
 	{"e",      &debugger_eval},
+	{"=",      &debugger_eval},
 	{{0}, NULL}
 };
 

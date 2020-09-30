@@ -284,6 +284,7 @@ calc_float_t calc(const char *expr) {
 	mathfail = false;
 	struct yard yard = {0};
 	expr += scan_whitespace(expr);
+	bool expect_unary = true;
 	// while there are tokens to be read
 	while(expr[0]) {
 		// if the token is a number
@@ -293,6 +294,7 @@ calc_float_t calc(const char *expr) {
 			expr = numend;
 			// push it to the output queue
 			yard_add_num(&yard, num);
+			expect_unary = false;
 		} else if(expr[0] == '.' || expr[0] == '_' || isalpha(expr[0])) {
 			// if the token is a variable, calculate recursively
 			const char *name;
@@ -319,6 +321,7 @@ calc_float_t calc(const char *expr) {
 			free((char*) name);
 			// push it to the output queue
 			yard_add_num(&yard, result);
+			expect_unary = false;
 		} else if(expr[0] == ')') {
 			// while top operator is not a left parenthesis
 			while(yard_peek(&yard) != '(') {
@@ -336,23 +339,34 @@ calc_float_t calc(const char *expr) {
 				yard_pop(&yard); // discard it
 			}
 			expr++;
+			expect_unary = false;
 			// end of right parenthesis handling
 		} else if(expr[0] == '(') {
 			// if the token is a left parenthesis,
 			//push it onto the operator stack.
 			yard_add_op(&yard, '(');
 			expr++;
+			expect_unary = true;
 		} else if(ispunct(expr[0])) {
 			// if the token is an operator,
 			// push it onto the operator stack.
+
+			if(expect_unary) {
+				switch(expr[0]) {
+					case '~': yard_add_num(&yard, -1); break;
+					case '-': yard_add_num(&yard, 0); break;
+				}
+			}
+
 			int op = expr[0];
-			if(ispunct(expr[1])) {
+			if(ispunct(expr[1]) && prec(OP_CODE(expr[0], expr[1]))) {
 				// we have a two-char operator
 				op = OP_CODE(expr[0], expr[1]);
 				expr++;
 			}
 			expr++;
 			yard_add_op(&yard, op);
+			expect_unary = op != '^'; // too lazy to implement negative exponents... use parentheses instead
 		} else {
 			report_error("Unknown character (char)%d = '%c'", (int)expr[0], (char)expr[0]);
 		}

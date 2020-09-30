@@ -119,7 +119,7 @@ Expressions are not standalone constructs, they are used in
 assignments and formatters. Expressions support parentheses and the 
 following binary operators: *+*, *-*, ***, */*, *^* 
 (exponentiation), *%* (remainder), *&* (binary and), *|* 
-(bitwise or) and *~* (bitwise xor). Unary operators are not 
+(bitwise or) and *~* (bitwise xor). Unary minus and binary not are also 
 supported. You can use decimal, hexadecimal (prefix with *0x*) or octal 
 (prefix with *0*) number literals. The number literal format is 
 specified by the compiler used to build hexproc. You can also refer to 
@@ -158,7 +158,7 @@ Hexproc comes with a built-in debugger, which you can activate using the *-d* op
 
 *help*, *h*, *?*:: Shows help on how to use the debugger
 
-*eval* _EXPR_, *e* _EXPR_:: Evaluate an expression
+*eval* _EXPR_, *e* _EXPR_, *=* _EXPR_:: Evaluate an expression
 
 == See Also
 xxd(1), cpp(1)
