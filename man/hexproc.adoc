@@ -95,8 +95,8 @@ Hexproc input consists of the following tokens:
 
 	The syntax [_attr1_, _attr2_, _..._](_EXPRESSION_) is called a 
 	formatter. Parentheses around _EXPRESSION_ can be omitted if the 
-	expression is a single number or variable name. The commas are 
-	one of the following:
+	expression is a single number or variable name. The commas are optional.
+	Each _attr_ can be one of the following:
 
 		* an integer between 0 and 8 inclusive, denoting the number of 
 		bytes to use
