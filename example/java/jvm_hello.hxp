@@ -6,10 +6,10 @@ ca fe ba be
 VERSION(8, 0)
 
 CONSTANT_POOL
-	CLASS(JvmHello, "JvmHello")
-	CLASS(Object, "java/lang/Object")
+	CLASS(JvmHello,    "JvmHello")
+	CLASS(Object,      "java/lang/Object")
 	CLASS(PrintStream, "java/io/PrintStream")
-	CLASS(System, "java/lang/System")
+	CLASS(System,      "java/lang/System")
 
 	STRING(message, "Hello, world!")
 
