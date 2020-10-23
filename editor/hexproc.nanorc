@@ -1,7 +1,7 @@
 syntax "Hexproc" ".*\.hxp$" ".*\.hexproc$"
 
 # General
-color magenta ".+"
+color white ".+"
 color brightwhite "[[:space:]]*"
 color brightwhite "^#.*"
 
@@ -9,22 +9,19 @@ color brightwhite "^#.*"
 color brightwhite "\<[0-9A-Fa-f][0-9A-Fa-f]\>"
 
 # Assignments
-color brightgreen "(:=|=).*"
-color italic,brightgreen "[a-zA-Z0-9._]+[[:space:]]*?:"
-color brightgreen "[a-zA-Z0-9._]+[[:space:]]*?:?="
-color red "(:|:=|=)"
+color brightred "[a-zA-Z0-9._]+[[:space:]]*?:"
+color peach "[a-zA-Z0-9._]+[[:space:]]*?:?="
 
 # Formatters
 color brightwhite "\([^)]*?\)"
-color brightwhite "][a-zA-Z0-9._]+"
+color red "][a-zA-Z0-9._]+"
 # Numbers
-color brightwhite "\<[0-9]+(\.[0-9]+)?"
-color brightwhite "\<0x[0-9A-Fa-f]+"
-color brightwhite "\<0b[01]+"
-color brightblack "\<(0[xb])"
+color brightwhite "\<[0-9]+(\.[0-9]+)?\>"
+color brightwhite "\<0x[0-9A-Fa-f]+\>"
+color brightwhite "\<0b[01]+\>"
 # Formatters
 color red "[()]"
-color brightcyan "\[[a-zA-Z0-9_, ]*]"
+color lagoon "\[[a-zA-Z0-9_, ]*]"
 color blue "[][]"
 
 # Keywords
@@ -33,6 +30,8 @@ color brightcyan "\<(_Pad|_Align)\>"
 # Symbols
 color blue ","
 color red "\+|\-|\*|\/|\^|\||\&|\~"
+
+color black,brightred ";"
 
 # Strings
 color yellow "\"(\\.|[^\\\"])*\"|'(\\.|[^\\'])*'"
@@ -43,7 +42,8 @@ color brightblack "(# |//).*$"
 color brightblack start="/\*" end="\*/"
 
 # C preprocessor
-color brightcyan "^#(pragma|error|include|define|undef|warning)($|[[:space:]])"
+color pink "^#(define|undef)[[:space:]]*[a-zA-Z_0-9]+"
+color mint "^#(pragma|error|include|define|undef|warning)($|[[:space:]])"
 color brightwhite,blue "^#[[:space:]]*(if(n?def)?)\>"
 color brightblack,yellow "^#[[:space:]]*el(se|if)\>"
 color brightwhite,red "^#[[:space:]]*endif\>"
@@ -55,4 +55,5 @@ color blue "^#!.*"
 color ,red "[[:space:]]+$"
 
 # Trailing backslash
-color brightcyan "\\$"
+color ,mint start="\\$" end="^[[:space:]]*"
+color brightblack "\\$"
