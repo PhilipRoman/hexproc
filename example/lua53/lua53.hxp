@@ -1,0 +1,78 @@
+#pragma once
+
+// \r = 13 = 0x0d
+// \n = 10 = 0x0a
+
+hexproc.endian := LE
+
+// see lundump.h
+// also, this is for 5.3 but still helpful:
+// http://files.catwell.info/misc/mirror/lua-5.2-bytecode-vm-dirk-laurie/lua52vm.html
+
+#define LUA_HEADER \
+	1b "Lua" \
+	53 00 \
+	19 93 0d 0a 1a 0a \
+	[byte]4 [byte]8 [byte]4 [byte]8 [byte]8 \
+	[int64]0x5678 [double]370.5
+
+#define _INCREMENT(varname) varname := varname + 1;
+#define _CONCAT2(a, b) a ## b
+#define _CONCAT(a, b) _CONCAT2(a, b)
+
+#define _LENSTRING(data) \
+	[byte](_CONCAT(_strend_, __LINE__) - _CONCAT(_strstart_, __LINE__)) \
+	_strstart: _CONCAT(_strstart_, __LINE__) := _strstart; \
+	data \
+	_strend: _CONCAT(_strend_, __LINE__) := _strend;
+
+#define SOURCE(source, startline, endline) \
+	_LENSTRING(source) [int32](startline) [int32](endline)
+
+
+// use 9th bit to mark a vararg function
+#define VARARG (1<<9)
+#define PARAMETERS(num) [byte](num & 0xFF) [byte](num >> 9)
+
+// global instruction counter
+_globalpc := 0
+// global constant counter
+_globalki := 0
+
+#define CODE(stacksize) [byte](stacksize) \
+	_funcstart: _funcstart0 := _funcstart; \
+	[int32]_globalpc
+
+// lua.h
+_tnumber := 3
+_tstring := 4
+type.nil := 0
+type.boolean := 1
+// lobject.h
+type.float       := _tnumber | (0 << 4)
+type.int         := _tnumber | (1 << 4)
+type.shortstring := _tstring | (0 << 4)
+type.longstring  := _tstring | (1 << 4)
+
+#define STRING(data) [byte]type.shortstring \
+	_LENSTRING(data) \
+	_globalki := _globalki + 1;
+
+#define INTEGER(val) [byte]type.int   [int64](val)  _globalki := _globalki + 1;
+#define NUMBER(val)  [byte]type.float [double](val) _globalki := _globalki + 1;
+#define NIL(val) [byte]type.nil _globalki := _globalki + 1;
+
+#define CONSTANTS [int32]_globalki
+
+//    B    Bx   C          A       OP
+// 000000000 000000000  00000000 000001
+#define iABC(OP, A, B, C) \
+	[int32]((OP&63) | ((A&255) << 6) | ((B&511) << (6+8+9)) | ((C&511) << (6+8))) \
+	_globalpc := _globalpc + 1;
+
+#define iABx(OP, A, Bx) ABC(OP, A, (Bx >> 9) & 511, Bx & 511)
+
+#define iAx(OP, Ax) ABC(OP, Ax & 255, (Ax >> (8+9)) & 511, (Ax >> 8) & 511)
+
+#define LOADK(target, const_index) iABx(1,  target, const_index)
+#define RETURN(start, len_minus_2) iABC(38, start, len_minus_2, 0)

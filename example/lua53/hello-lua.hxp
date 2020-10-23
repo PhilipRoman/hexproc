@@ -1,0 +1,18 @@
+#include "lua53.hxp"
+
+LUA_HEADER
+
+SOURCE(00, 0, 0)
+PARAMETERS(0 + VARARG)
+CODE(2)
+	RETURN(0, 1)
+
+CONSTANTS
+
+[int32]1 // upval
+[byte]1
+[byte]0
+
+[int32]0 // proto
+
+[int32]0 [int32]0 [int32]0 // debug

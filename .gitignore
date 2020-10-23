@@ -5,6 +5,7 @@ man/*.1
 # generated example files
 example/java/*.class
 example/elf/*.o
+example/lua53/*.lua
 
 # generated executables
 build/
