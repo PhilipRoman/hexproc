@@ -1,14 +1,12 @@
 #pragma once
 
-// \r = 13 = 0x0d
-// \n = 10 = 0x0a
-
 hexproc.endian := LE
 
 // see lundump.h
 // also, this is for 5.3 but still helpful:
 // http://files.catwell.info/misc/mirror/lua-5.2-bytecode-vm-dirk-laurie/lua52vm.html
-
+// \r = 13 = 0x0d
+// \n = 10 = 0x0a
 #define LUA_HEADER \
 	1b "Lua" \
 	53 00 \
@@ -16,33 +14,34 @@ hexproc.endian := LE
 	[byte]4 [byte]8 [byte]4 [byte]8 [byte]8 \
 	[int64]0x5678 [double]370.5
 
-#define _INCREMENT(varname) varname := varname + 1;
+
+// #define _INCREMENT(varname) varname := varname + 1;
 #define _CONCAT2(a, b) a ## b
 #define _CONCAT(a, b) _CONCAT2(a, b)
-
 #define _LENSTRING(data) \
-	[byte](_CONCAT(_strend_, __LINE__) - _CONCAT(_strstart_, __LINE__)) \
+	[byte](1 + _CONCAT(_strend_, __LINE__) - _CONCAT(_strstart_, __LINE__)) \
 	_strstart: _CONCAT(_strstart_, __LINE__) := _strstart; \
 	data \
 	_strend: _CONCAT(_strend_, __LINE__) := _strend;
 
+
+// number of instructions, constants, upvalues, prototypes and debug entries
+_ninstr := 0;
+_nconst := 0;
+_nupval := 0;
+_nproto := 0;
+_ndebug := 0;
+
 #define SOURCE(source, startline, endline) \
-	_LENSTRING(source) [int32](startline) [int32](endline)
+	_LENSTRING(source) 00 [int32](startline) [int32](endline)
 
 
 // use 9th bit to mark a vararg function
 #define VARARG (1<<9)
 #define PARAMETERS(num) [byte](num & 0xFF) [byte](num >> 9)
 
-// global instruction counter
-_globalpc := 0
-// global constant counter
-_globalki := 0
 
-#define CODE(stacksize) [byte](stacksize) \
-	_funcstart: _funcstart0 := _funcstart; \
-	[int32]_globalpc
-
+#define CONSTANTS [int32]_nconst
 // lua.h
 _tnumber := 3
 _tstring := 4
@@ -53,26 +52,38 @@ type.float       := _tnumber | (0 << 4)
 type.int         := _tnumber | (1 << 4)
 type.shortstring := _tstring | (0 << 4)
 type.longstring  := _tstring | (1 << 4)
-
 #define STRING(data) [byte]type.shortstring \
 	_LENSTRING(data) \
-	_globalki := _globalki + 1;
+	_nconst := _nconst + 1;
+#define INTEGER(val) [byte]type.int   [int64](val)  _nconst := _nconst + 1;
+#define NUMBER(val)  [byte]type.float [double](val) _nconst := _nconst + 1;
+#define NIL(val) [byte]type.nil _nconst := _nconst + 1;
 
-#define INTEGER(val) [byte]type.int   [int64](val)  _globalki := _globalki + 1;
-#define NUMBER(val)  [byte]type.float [double](val) _globalki := _globalki + 1;
-#define NIL(val) [byte]type.nil _globalki := _globalki + 1;
 
-#define CONSTANTS [int32]_globalki
+#define UPVALUES [int32]_nupval
+#define UPVALUE(instack, index) [byte]instack [byte]index _nupval := _nupval + 1;
 
+
+#define PROTOTYPES [int32]0
+
+
+#define DEBUG [int32]0 [int32]0 [int32]0
+
+
+#define CODE(stacksize) [byte](stacksize) \
+	_funcstart: _funcstart0 := _funcstart; \
+	[int32]_ninstr
 //    B    Bx   C          A       OP
 // 000000000 000000000  00000000 000001
 #define iABC(OP, A, B, C) \
-	[int32]((OP&63) | ((A&255) << 6) | ((B&511) << (6+8+9)) | ((C&511) << (6+8))) \
-	_globalpc := _globalpc + 1;
+	[int32](((OP)&63) | (((A)&255) << 6) | (((B)&511) << (6+8+9)) | (((C)&511) << (6+8))) \
+	_ninstr := _ninstr + 1;
 
-#define iABx(OP, A, Bx) ABC(OP, A, (Bx >> 9) & 511, Bx & 511)
+#define iABx(OP, A, Bx) iABC(OP, A, ((~(Bx)) >> 9) & 511, (~(Bx)) & 511)
+#define iAx(OP, Ax) iABC(OP, (Ax) & 255, ((Ax) >> (8+9)) & 511, ((Ax) >> 8) & 511)
 
-#define iAx(OP, Ax) ABC(OP, Ax & 255, (Ax >> (8+9)) & 511, (Ax >> 8) & 511)
-
-#define LOADK(target, const_index) iABx(1,  target, const_index)
+#define LOADK(dest, const_index) iABx(1,  dest, const_index)
 #define RETURN(start, len_minus_2) iABC(38, start, len_minus_2, 0)
+#define GETTABUP(dest, upval_index, key) iABC(6, dest, upval_index, key)
+// R(A), ... ,R(A+C-2) := R(A)(R(A+1), ... ,R(A+B-1))
+#define CALL(func_and_dest, num_args_minus_2, num_dests_minus_2) iABC(36, func_and_dest, num_args_minus_2, num_dests_minus_2)

@@ -1,0 +1,5 @@
+#include "lua53.hxp"
+
+hexproc.endian := BE
+GETTABUP(0, 0, -1) // reg0 = upv0[const1]
+LOADK(1, -2) // reg1 = const2

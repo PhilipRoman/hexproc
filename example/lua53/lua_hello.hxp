@@ -1,0 +1,22 @@
+#include "lua53.hxp"
+
+LUA_HEADER
+
+SOURCE("", 0, 0)
+PARAMETERS(0 + VARARG)
+CODE(2)
+	GETTABUP(0, 0, -1) // reg0 = upv0[const1]
+	LOADK(1, -2) // reg1 = const2
+	CALL(0, 2, 1) // (void) reg0(reg1)
+	RETURN(0, 1) // return nothing
+
+CONSTANTS
+	STRING("print")
+	STRING("Hello")
+
+UPVALUES
+	UPVALUE(1, 0)
+
+PROTOTYPES
+
+DEBUG

@@ -15,7 +15,7 @@ endif
 lua: hello.lua
 	$(LUA) $<
 
-hello.lua: hello-lua.hxp lua53.hxp
+hello.lua: lua_hello.hxp lua53.hxp
 	$(CPP) $< | hexproc -b > $@
 
 clean:
