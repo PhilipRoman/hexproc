@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "strdup.h"
 #include "diagnostic.h"
 #include "formatter.h"
 
