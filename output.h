@@ -101,6 +101,6 @@ void output_byte(char byte, FILE *output) {
 
 void finalize_output(FILE *output) {
 	consume_sourcemap_actions(output);
-	if(output_mode >= OUTPUT_HEX)
+	if(output_mode >= OUTPUT_HEX && need_space)
 		fputc('\n', output);
 }

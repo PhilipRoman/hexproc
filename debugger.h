@@ -57,8 +57,12 @@ const struct {
 bool run_debug_command(void) {
 	/* always scanf 1 less character than buffer size */
 	char command[32];
-	if(fscanf(stdin, "%31s", command) == EOF)
-		return false;
+	switch(fscanf(stdin, "%31s", command)) {
+		case EOF:
+			return false;
+		case 0:
+			return true;
+	}
 	for(unsigned i = 0; debugger_commands[i].func != NULL; i++)
 		if(!strcmp(command, debugger_commands[i].name))
 			return debugger_commands[i].func();
@@ -75,7 +79,7 @@ void enter_debugger() {
 		fprintf(stderr, "Internal error: could not setup signal handler for SIGINT, errno = %d\n", errno);
 
 	do {
-		fprintf(stderr, "\033[31m" "debug %s:%"PRIu64"> " "\033[92m", current_file_name, line_number);
+		fprintf(stderr, "\033[1m" "debug %s:%"PRIu64"> " "\033[0m", current_file_name, line_number);
 	} while(run_debug_command());
 
 	if(signal(SIGINT, enter_debugger_async) == SIG_ERR)
@@ -91,10 +95,10 @@ bool debugger_vars(void) {
 		struct label *label = &labelmap[i];
 		while(label && label->name) {
 			if(label->expr)
-				fprintf(stderr, "    %2u: %16s -> \"%s\"\n",
+				fprintf(stderr, "\t%2u: %16s = \"%s\"\n",
 					i, label->name, label->expr);
 			else
-				fprintf(stderr, "    %2u: %16s -> %u\n",
+				fprintf(stderr, "\t%2u: %16s = %u\n",
 					i, label->name, label->constant);
 			label = label->next;
 		}
