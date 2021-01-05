@@ -1,0 +1,335 @@
+'\" t
+.\"     Title: hexproc
+.\"    Author: Filips Romāns
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2021-01-05
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "HEXPROC" "1" "2021-01-05" "\ \&" "\ \&"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+hexproc \- hexadecimal preprocessor for building binary files or hexdumps
+.SH "SYNOPSIS"
+.sp
+\f(CR\fBhexproc\fP [\fIOPTION...\fP] [\fIFILE\fP]\fP
+.SH "OPTIONS"
+.sp
+\fB\-v\fP
+.RS 4
+Prints the program version and exits
+.RE
+.sp
+\fB\-V\fP
+.RS 4
+Prints advanced program configuration and exits
+.RE
+.sp
+\fB\-h\fP
+.RS 4
+Prints a brief help message and exits
+.RE
+.sp
+\fB\-b\fP
+.RS 4
+Outputs binary data instead of hexadecimal
+.RE
+.sp
+\fB\-B\fP
+.RS 4
+Forces writing binary data even if output is a TTY
+.RE
+.sp
+\fB\-c\fP
+.RS 4
+Enable colored output \- bytes resulting from a single
+formatter or string will be marked with the same color;
+not compatible with \fB\-b\fP or \fB\-B\fP
+.RE
+.sp
+\fB\-C\fP
+.RS 4
+Forces colored output even if the output is not a TTY
+.RE
+.sp
+\fB\-d\fP
+.RS 4
+Enter debug mode
+.RE
+.SH "DESCRIPTION"
+.sp
+Hexproc is a tool for building hex files. The input file
+(or \f(CRstdin\fP, if no file given) is processed and then
+written to \f(CRstdout\fP.
+.sp
+Hexproc is meant to be used as part of a pipeline and
+therefore does not implement many features which are
+provided by other processing tools.
+.sp
+It is recommended to use a text preprocessor (such as
+\fBcpp\fP or \fBm4\fP) before feeding the input to \fBhexproc\fP as
+\fBhexproc\fP does not provide macros or file inclusion.
+.SH "SYNTAX"
+.sp
+Hexproc input consists of the following tokens:
+.sp
+\fBstrings\fP
+.RS 4
+Quoted ASCII text is converted to bytes and replaced
+with hexadecimal octets. For example, the result of \fB"Hello"\fP
+is \fB48 65 6c 6c 6f\fP.
+.RE
+.sp
+\fBoctets\fP
+.RS 4
+Two hexadecimal digits will appear on the output as\-is.
+.RE
+.sp
+\fBcomments\fP
+.RS 4
+End\-of\-line comments are created using \fB#\fP or \fB//\fP; Note that
+comments in form of # \fINUMBER\fP "\fIfilename\fP" are recognized as
+line markers, similar to how the C preprocessor uses them. This way,
+you can get correct debug information after using \fB#include\fP.
+Block comments start with \fB/*\fP and end with \fB*/\fP. They
+cannot be nested.
+.RE
+.sp
+\fBlabels\fP
+.RS 4
+The syntax \fINAME\fP \fB:\fP will assign the current byte offset
+to the specified name. Labels may freely appear between tokens.
+.RE
+.sp
+\fBlazy assignment\fP
+.RS 4
+The syntax \fINAME\fP \fB=\fP \fIEXPRESSION\fP will map the variable name to the
+given expression without evaluating it. Whenever the name is
+referenced, the expression will be evaluated. The expression must
+not be recursive. If you want to add more tokens after an assignment,
+terminate the expression with "\fB;\fP".
+.RE
+.sp
+\fBimmediate assignment\fP
+.RS 4
+The syntax \fINAME\fP \fB:=\fP \fIEXPRESSION\fP will
+evaluate the expression and assign the result to the variable. The
+expression may reference the variable it\(cqs being assigned to. If
+you want to add more tokens after an assignment, terminate the
+expression with "\fB;\fP".
+.RE
+.sp
+\fBformatters\fP
+.RS 4
+The syntax [\fIattr1\fP, \fIattr2\fP, \fI...\fP](\fIEXPRESSION\fP) is called a
+formatter. Parentheses around \fIEXPRESSION\fP can be omitted if the
+expression is a single number or variable name. The commas are optional.
+Each \fIattr\fP can be one of the following:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+an integer between 0 and 8 inclusive, denoting the number of
+bytes to use
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+the string \fBBE\fP or \fBLE\fP, which changes the representation of
+the value to big or little endian, respectively
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+a type name, such as \fBint64\fP or \fBfloat\fP, which controls the
+size and representation of the value. (See section \fBType Names\fP
+for more information).
+.RE
+.RE
+.sp
+Leading and trailing whitespace is ignored.
+.sp
+Hexproc maps lines one\-to\-one so that line numbers
+are preserved.
+.SH "EXPRESSION SYNTAX"
+.sp
+Expressions are not standalone constructs, they are used in
+assignments and formatters. Expressions support parentheses and the
+following binary operators: \fB+\fP, \fB\-\fP, \fB*\fP, \fB/\fP, \fB^\fP
+(exponentiation), \fB%\fP (remainder), \fB&\fP (binary and), \fB|\fP
+(bitwise or) and \fB~\fP (bitwise xor). Unary minus and binary not are also
+supported. You can use decimal, hexadecimal (prefix with \fB0x\fP) or octal
+(prefix with \fB0\fP) number literals. The number literal format is
+specified by the compiler used to build hexproc. You can also refer to
+variables by their names. Operator precedence works just like in C.
+.SH "SPECIAL VARIABLES"
+.sp
+A few variables have a special role in hexproc. These variable names
+start with the prefix "\fBhexproc.\fP"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBhexproc.endian\fP \- sets the default endianness of formatters
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBhexproc.major\fP \- version release number of hexproc ("\fB1\fP" in "\fBv1.2.3\fP")
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBhexproc.minor\fP \- minor version number of hexproc ("\fB2\fP" in "\fBv1.2.3\fP")
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBhexproc.patch\fP \- patch number of hexproc ("\fB3\fP" in "\fBv1.2.3\fP")
+.RE
+.SH "TYPE NAMES"
+.sp
+The following identifiers may be used as type names:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBint64\fP, \fBint32\fP, \fBint16\fP, \fBint8\fP \- fixed size types
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBlong\fP, \fBint\fP, \fBshort\fP, \fBbyte\fP \- synonymous with fixed size types
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBieee754_single\fP, \fBieee754_double\fP \- IEEE 754 single and double precision floating point types
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBfloat\fP, \fBdouble\fP \- synonymous with above floating point types
+.RE
+.SH "DEBUGGER"
+.sp
+Hexproc comes with a built\-in debugger, which you can activate using the \fB\-d\fP option. The debugger supports the following commands:
+.sp
+\fBbreak\fP \fINUMBER\fP, \fBb\fP \fINUMBER\fP
+.RS 4
+Creates a breakpoint on given line number. When execution reaches a
+line with a breakpoint, it will enter the debugger before evaluating the line
+.RE
+.sp
+\fBresume\fP, \fBr\fP
+.RS 4
+Suspends the debugger and resumes execution.
+.RE
+.sp
+\fBstep\fP, \fBs\fP
+.RS 4
+Executes next line and enters debugger again.
+.RE
+.sp
+\fBvars\fP, \fBv\fP, \fBlist\fP, \fBl\fP
+.RS 4
+Displays the current state of all variables
+.RE
+.sp
+\fBhelp\fP, \fBh\fP, \fB?\fP
+.RS 4
+Shows help on how to use the debugger
+.RE
+.sp
+\fBeval\fP \fIEXPR\fP, \fBe\fP \fIEXPR\fP, \fB=\fP \fIEXPR\fP
+.RS 4
+Evaluate an expression
+.RE
+.SH "SEE ALSO"
+.sp
+xxd(1), cpp(1)
+.SH "AUTHOR"
+.sp
+Filips Romāns

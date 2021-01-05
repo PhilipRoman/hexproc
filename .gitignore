@@ -1,7 +1,3 @@
-# generated documentation
-man/*.html
-man/*.1
-
 # generated example files
 example/java/*.class
 example/elf/*.o

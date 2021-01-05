@@ -17,7 +17,8 @@ WINDOWS_CC ?= x86_64-w64-mingw32-gcc
 all := linux
 endif
 
-ASCIIDOCTOR := $(strip $(shell which asciidoctor))
+ASCIIDOCTOR := $(strip $(shell command -v asciidoctor))
+WKHTMLTOPDF := $(strip $(shell command -v wkhtmltopdf))
 
 CFLAGS += -Wall -Wpedantic -pedantic \
 	-DHEXPROC_DATE="\"$(shell export TZ=GMT; date --rfc-3339=seconds)\"" \
@@ -31,59 +32,38 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
-RELEASE_FLAGS := -O2 -s
+RELEASE_FLAGS := -O2 -s -DNDEBUG
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
 VALGRIND_FLAGS += --leak-check=full --leak-resolution=high --show-reachable=yes
 
 .PHONY: all linux windows test benchmark benchmark-linux benchmark-windows valgrind sanitize analyze doc clean install uninstall
 
-###############################################################
 ########################   COMPILING   ########################
-###############################################################
 
 all: linux
 # Release targets
 linux: build/linux/hexproc
-build/linux/hexproc: build/linux/hexproc.o
+build/linux/hexproc: hexproc.c $(HFILES)
 	@mkdir -p build/linux
-	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -o $@ $^ -lm
-
-build/linux/%.o: %.c $(HFILES)
-	@mkdir -p build/linux
-	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
-
+	$(CC) $(CFLAGS) $(RELEASE_FLAGS) -lm -o $@ $<
 
 windows: build/windows/hexproc.exe
-build/windows/hexproc.exe: build/windows/hexproc.o
+build/windows/hexproc.exe: hexproc.c $(HFILES)
 	@mkdir -p build/windows
-	$(WINDOWS_CC) $(CFLAGS) -DHEXPROC_COMPILER="$(WINDOWS_CC)" $(RELEASE_FLAGS) -o $@ $^ -lm
-
-build/windows/%.o: %.c $(HFILES)
-	@mkdir -p build/windows
-	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -c -o $@ $<
+	$(WINDOWS_CC) $(CFLAGS) $(RELEASE_FLAGS) -lm -o $@ $<
 
 # Sanitized executables for finding bugs
-build/sanitized/hexproc: build/sanitized/hexproc.o
+build/sanitized/hexproc: hexproc.c $(HFILES)
 	@mkdir -p build/sanitized
-	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -o $@ $^ -lm
-
-build/sanitized/%.o: %.c $(HFILES)
-	@mkdir -p build/sanitized
-	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(SANITIZE_FLAGS) -lm -o $@ $<
 
 # Debug targets for Valgrind, etc.
-build/debug/hexproc: build/debug/hexproc.o
+build/debug/hexproc: hexproc.c $(HFILES)
 	@mkdir -p build/debug
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -o $@ $^ -lm
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -lm -o $@ $<
 
-build/debug/%.o: %.c $(HFILES)
-	@mkdir -p build/debug
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -c -o $@ $<
-
-###############################################################
 #########################   TESTING   #########################
-###############################################################
 
 test: build/linux/hexproc
 	$(SHELL) test/test.sh
@@ -111,39 +91,26 @@ analyze: hexproc.c $(HFILES)
 	$(CC) $(CFLAGS) $(ANALYSIS_FLAGS) -fsyntax-only $<
 	cppcheck $(CHECK_FLAGS) $^
 
-###############################################################
 #####################   DOCUMENTATION   #######################
-###############################################################
 
-ifneq ($(ASCIIDOCTOR),) # if not empty
-doc: man/hexproc.1 man/hexproc.html
+doc: man/hexproc.1 man/hexproc.html man/hexproc.pdf
 
 man/%.1: man/%.adoc
 	$(ASCIIDOCTOR) -b manpage $<
-
 man/%.html: man/%.adoc
 	$(ASCIIDOCTOR) -b html5 $<
-else
-doc:
-	@echo asciidoctor not found, cannot generate documentation
+man/%.pdf: man/%.html
+	$(WKHTMLTOPDF) $< $@
 
-man/%:
-	@echo asciidoctor not found, cannot generate documentation
-endif
-
-###############################################################
 #####################    INSTALLATION    ######################
-###############################################################
 
-#ifeq ($(OS),linux)
+ifneq ($(OS),Windows_NT)
 
-install: doc build/linux/hexproc
+install: build/linux/hexproc
 	@mkdir -p                     /usr/local/share/doc/hexproc/
 	@cp -rv  example              /usr/local/share/doc/hexproc/
-ifneq ($(ASCIIDOCTOR),) # if not empty
 	@cp -v   man/hexproc.html     /usr/local/share/doc/hexproc/
 	@cp -v   man/hexproc.1        /usr/local/share/man/man1/
-endif
 	@cp -v   build/linux/hexproc  /usr/local/bin/
 	@echo ======== INSTALLED HEXPROC ========
 
@@ -153,13 +120,12 @@ uninstall:
 	@rm -v   /usr/local/bin/hexproc               || true
 	@echo ======== UNINSTALLED HEXPROC ========
 
-#endif
+endif
 
-###############################################################
 #######################   CLEANUP   ###########################
-###############################################################
 
 clean:
 	@rm -rv  build  || true
-	@rm -v   man/hexproc.1  || true
+	@rm -v   man/hexproc.1     || true
 	@rm -v   man/hexproc.html  || true
+	@rm -v   man/hexproc.pdf   || true

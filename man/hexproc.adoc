@@ -1,5 +1,5 @@
 = hexproc(1)
-Philip Roman
+Filips Romāns
 include::../VERSION[]
 :doctype: manpage
 

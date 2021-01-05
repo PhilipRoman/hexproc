@@ -13,21 +13,17 @@ https://github.com/PhilipRoman/hexproc/releases[GitHub releases]
 Runing `make` will produce a standalone executable `hexproc`. Copy it wherever
 you want.
 
-Dependencies:
+Requirements:
 
 	* `make` (tested on GNU make)
-	* C99-compatible toolchain
-
-Optional dependencies
-
-	* For building documentation: `asciidoctor`
-	* For checking C code: `cppcheck`
+	* Posix and C99 compatible compiler
 
 == Documentation
 
-Running `make doc` will generate documentation. `asciidoctor` is required
-to build the documentation. Alternatively, just read the AsciiDoc source
-under `man/`.
+Pre-built documention is provided in the `man/` directory in various formats.
+
+Running `make doc` will generate documentation. `asciidoctor` and `wkhtmltopdf`
+is required to rebuild the documentation.
 
 == License
 
