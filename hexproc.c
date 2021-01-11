@@ -26,7 +26,6 @@ int fileno(FILE*);
 #include <stdio.h>
 #include <string.h>
 
-#include "getline.h"
 #include "diagnostic.h"
 #include "output.h"
 #include "formatter.h"

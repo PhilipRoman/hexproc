@@ -126,6 +126,3 @@ endif
 
 clean:
 	@rm -rv  build  || true
-	@rm -v   man/hexproc.1     || true
-	@rm -v   man/hexproc.html  || true
-	@rm -v   man/hexproc.pdf   || true
