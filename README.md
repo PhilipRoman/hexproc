@@ -1,14 +1,14 @@
-= Hexproc
+# Hexproc
 
 Hexproc is a hexadecimal preprocessor for building hex and binary files.
-See the link:man/hexproc.adoc[manual] for more information.
+See the [manual](man/hexproc.adoc) for more information.
 
 Hexproc is written in C and has no other required runtime dependencies.
 
 You can either build it yourself or grab the pre-built version from
-https://github.com/PhilipRoman/hexproc/releases[GitHub releases]
+[GitHub releases](https://github.com/PhilipRoman/hexproc/releases)
 
-== Build
+## Build
 
 Runing `make` will produce a standalone executable `hexproc`. Copy it wherever
 you want.
@@ -18,13 +18,13 @@ Requirements:
 	* `make` (tested on GNU make)
 	* Posix and C99 compatible compiler
 
-== Documentation
+## Documentation
 
 Pre-built documention is provided in the `man/` directory in various formats.
 
 Running `make doc` will generate documentation. `asciidoctor` and `wkhtmltopdf`
 is required to rebuild the documentation.
 
-== License
+## License
 
-link:LICENSE[MIT]
+[MIT](LICENSE)
