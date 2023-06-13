@@ -67,7 +67,9 @@ void process_line(const char *line, struct bytequeue *buffer) {
 				line += scan_formatter(line, &fmt, &expr);
 				if(textfail)
 					goto end_loop;
-				struct formatter formatter = create_formatter(fmt, expr);
+				struct formatter formatter;
+				if(!create_formatter(fmt, expr, &formatter))
+					goto end_loop;
 				// don't need to free expr because it is kept in formatter
 				free((char*)fmt);
 				add_formatter(formatter);

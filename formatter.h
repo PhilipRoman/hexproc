@@ -83,9 +83,11 @@ bool resolve_datatype(const char *name, struct formatter *out) {
 	return false;
 }
 
-static struct formatter create_formatter(const char *fmt, const char *expr) {
-	if(!fmt || !expr)
+static bool create_formatter(const char *fmt, const char *expr, struct formatter *output) {
+	if(!fmt || !expr) {
 		report_error("Missing formatter or expression");
+		return false;
+	}
 	struct formatter blueprint = {0};
 	int custom_size = -1;
 	unsigned endian = 0; // see formatter.h
@@ -95,7 +97,7 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 		fmt += scan_name(fmt, &attr);
 		if(!attr) {
 			report_error("Expected formatter attribute");
-			return blueprint;
+			return false;
 		}
 		if(isdigit(attr[0])) {
 			// we're parsing a numeric byte width
@@ -112,8 +114,11 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 				endian = ENDIAN_LITTLE;
 			else if(strcmp("BE", attr)==0)
 				endian = ENDIAN_BIG;
-			else if(!resolve_datatype(attr, &blueprint))
+			else if(!resolve_datatype(attr, &blueprint)) {
 				report_error("Unknown data type: \"%s\"", attr);
+				free((char*)attr);
+				return false;
+			}
 		}
 		free((char*)attr);
 		fmt += scan_whitespace(fmt);
@@ -139,7 +144,8 @@ static struct formatter create_formatter(const char *fmt, const char *expr) {
 
 	if(custom_size >= 0)
 		result.nbytes = custom_size;
-	return result;
+	*output = result;
+	return true;
 }
 
 void format_value(calc_float_t value, struct formatter fmt, uint8_t *out /* must have space for at least 'fmt.nbytes' bytes */) {

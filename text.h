@@ -84,6 +84,7 @@ size_t scan_quoted_string(const char *string) {
 		char c = string[i++];
 		if(c == '\0') {
 			report_error("Unfinished quoted string");
+			textfail = true;
 			i--;
 			break;
 		} else if(c == '"') {

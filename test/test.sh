@@ -5,15 +5,17 @@ if [ -f 'test.sh' ]; then
 	cd ..
 fi
 
-if [ ! -f 'build/linux/hexproc' ]; then
-	echo "Error: build/linux/hexproc executable not found"
+exe="${1:-build/linux/hexproc}"
+
+if [ ! -f "$exe" ]; then
+	echo "Error: $exe executable not found"
 	exit 2
 fi
 
 expect() {
 	#  $1 is input
 	#  $2 is expected output
-	output="$(echo "$1" | build/linux/hexproc)"
+	output="$(echo "$1" | "$exe")"
 	if [ "$2" != "$output" ]; then
 		echo '============================'
 		echo "Assertion failed"

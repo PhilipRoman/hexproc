@@ -32,6 +32,7 @@ SANITIZE_FLAGS := -Og -g -fsanitize=undefined -fsanitize=leak \
 	-fsanitize=address -DCLEANUP
 
 DEBUG_FLAGS := -Og -g -DCLEANUP
+GCOV_FLAGS := -Og -g -DCLEANUP -fno-inline --coverage
 RELEASE_FLAGS := -O2 -s -DNDEBUG
 CHECK_FLAGS := --std=c99 --std=c11 --enable=all -j6 --quiet
 
@@ -63,6 +64,17 @@ build/debug/hexproc: hexproc.c $(HFILES)
 	@mkdir -p build/debug
 	$(CC) $(CFLAGS) $(DEBUG_FLAGS) -lm -o $@ $<
 
+# GCOV instrumentation
+build/gcov/hexproc: hexproc.c $(HFILES)
+	@mkdir -p build/gcov
+	$(CC) $(CFLAGS) $(GCOV_FLAGS) -lm -o $@ $<
+	cp build/gcov/hexproc.gcno .
+
+# AFL fuzzer instrumentation
+build/afl/hexproc: hexproc.c $(HFILES)
+	@mkdir -p build/afl
+	afl-gcc $(CFLAGS) -lm -o $@ $<
+
 #########################   TESTING   #########################
 
 test: build/linux/hexproc
@@ -82,6 +94,18 @@ benchmark-windows: build/windows/hexproc.exe
 
 valgrind: build/debug/hexproc
 	valgrind $(VALGRIND_FLAGS) ./$< example/showcase.hxp > /dev/null
+
+gcov: build/gcov/hexproc
+	$(SHELL) test/test.sh $<
+	cp build/gcov/hexproc.gcda .
+	gcov *.c
+
+afl: build/afl/hexproc
+	mkdir -p afl-inputs
+	cp example/showcase.hxp afl-inputs
+	cpp example/java/jvm_hello.hxp > afl-inputs/jvm_hello.hxp
+	cpp example/elf/object_hello.hxp > afl-inputs/object_hello.hxp
+	afl-fuzz -i afl-inputs -o afl-outputs build/afl/hexproc
 
 # Runs the sanitized executable
 sanitize: build/sanitized/hexproc
@@ -126,3 +150,5 @@ endif
 
 clean:
 	@rm -rv  build  || true
+	@rm *.gcov *.gcno *.gcda || true
+	@rm -rv afl-outputs || true

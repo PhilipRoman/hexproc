@@ -369,6 +369,7 @@ calc_float_t calc(const char *expr) {
 			expect_unary = op != '^'; // too lazy to implement negative exponents... use parentheses instead
 		} else {
 			report_error("Unknown character (char)%d = '%c'", (int)expr[0], (char)expr[0]);
+			expr++;
 		}
 		expr += scan_whitespace(expr);
 		if(mathfail)
